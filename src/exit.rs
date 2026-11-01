@@ -9,17 +9,18 @@ pub enum Exit {
     Leaks = 1,
     /// No rules loaded; candidates are still printed. For `hydrate`, a listed key has no value.
     NoRules = 2,
-    /// Usage or IO error, missing path, nothing scanned.
+    /// Usage or IO error, missing path, nothing scanned, or a data file left unscanned.
     Error = 3,
 }
 
 impl Exit {
     /// A leak wins, since it is the finding to act on. An incomplete scan outranks
     /// "no rules", and neither may ever read as clean.
-    pub fn decide(leaks: usize, rules: usize, scanned: usize, io_errors: usize) -> Exit {
+    /// `incomplete` counts inputs that were not read: IO errors and unscanned data files.
+    pub fn decide(leaks: usize, rules: usize, scanned: usize, incomplete: usize) -> Exit {
         if leaks > 0 {
             Exit::Leaks
-        } else if scanned == 0 || io_errors > 0 {
+        } else if scanned == 0 || incomplete > 0 {
             Exit::Error
         } else if rules == 0 {
             Exit::NoRules

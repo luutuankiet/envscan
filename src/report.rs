@@ -1,8 +1,10 @@
 //! The scan report. The field order and key names are a contract for `--json` readers.
-//! `data_files` stays empty until its package fills it.
 
 use serde::Serialize;
 use std::collections::BTreeMap;
+
+/// Unscanned files listed in the text form; a tree can hold thousands.
+const TEXT_DATA_CAP: usize = 20;
 
 #[derive(Serialize, Debug, Default)]
 pub struct Report {
@@ -18,6 +20,9 @@ pub struct Report {
     pub candidates_total: usize,
     pub candidates_by_kind: BTreeMap<String, usize>,
     pub candidates: Vec<Candidate>,
+    /// Lists every data file in the text form too, as `--full` does for everything else.
+    #[serde(skip)]
+    pub full: bool,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -41,7 +46,9 @@ pub struct Leak {
 #[derive(Serialize, Debug, Clone)]
 pub struct DataFile {
     pub path: String,
+    /// The lowercase extension.
     pub format: String,
+    /// The size. Never rows or columns, which would mean reading a header.
     pub shape: String,
     pub scanned: bool,
 }
@@ -88,13 +95,46 @@ impl Report {
                 leak.key, leak.strict, leak.loose, leak.at.join("  ")
             ));
         }
+        self.push_data_files(&mut out);
         if self.extractor_errors > 0 {
             out.push_str(&format!(
                 "\nEXTRACTOR ERRORS  {}: those lines may hold more candidates than listed\n",
                 self.extractor_errors
             ));
         }
-        out.push_str(&format!("\nCANDIDATES  {}\n", self.candidates_total));
+        self.push_candidates(&mut out);
+        out
+    }
+
+    /// Unscanned first, because those are what stop this being a clean result.
+    fn push_data_files(&self, out: &mut String) {
+        if self.data_files.is_empty() {
+            return;
+        }
+        let unscanned: Vec<&DataFile> = self.data_files.iter().filter(|d| !d.scanned).collect();
+        let scanned = self.data_files.len() - unscanned.len();
+        out.push_str(&format!(
+            "\nDATA FILES  {} matched for known values, {} unscanned{}\n",
+            scanned,
+            unscanned.len(),
+            if unscanned.is_empty() { "" } else { ": not a clean result" }
+        ));
+        let cap = if self.full { usize::MAX } else { TEXT_DATA_CAP };
+        for d in unscanned.iter().take(cap) {
+            out.push_str(&format!("  unscanned  {:<8} {:>14}  {}\n", d.format, d.shape, d.path));
+        }
+        if unscanned.len() > cap {
+            out.push_str(&format!("  and {} more unscanned; --json lists them all\n", unscanned.len() - cap));
+        }
+    }
+
+    fn push_candidates(&self, out: &mut String) {
+        let by_kind: Vec<String> = self.candidates_by_kind.iter().map(|(k, n)| format!("{k} {n}")).collect();
+        out.push_str(&format!("\nCANDIDATES  {} (top {} by weight, then spread)", self.candidates_total, self.candidates.len()));
+        if !by_kind.is_empty() {
+            out.push_str(&format!("  {}", by_kind.join(", ")));
+        }
+        out.push('\n');
         for c in &self.candidates {
             out.push_str(&format!(
                 "  {:<12} {:<20} files {:>3}  hits {:>4}  {}\n",
@@ -105,6 +145,5 @@ impl Report {
                 if c.at.is_empty() { c.first.clone() } else { c.at.join("  ") }
             ));
         }
-        out
     }
 }
