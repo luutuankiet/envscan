@@ -1,11 +1,13 @@
 //! Known-value matching. Case-insensitive, with two boundary tiers.
 //!
-//! Strict: neither neighbour is a word character, `-`, or (before the value) `.`.
-//! Loose: a `-` on either side or a leading `.`, so `gs://value-raw` and `sub.value` match.
-//! `_` stays a word character, so `pre_value` does not match, in line with the whole-word
-//! rule `dehydrate` rewrites by. A non-ASCII neighbour counts as a boundary, because text
-//! with no spaces between words must not hide a value. Side checks apply only where the
-//! value's own edge is a word character: `/opt/value` still matches inside `mnt/opt/value`.
+//! A value glued to an ASCII letter or digit is inside a longer word and never matches.
+//! Strict: neither neighbour is a letter, digit, `_`, `-`, or (before the value) `.`.
+//! Loose: a `_` or `-` on either side or a leading `.`, so `value_orders`, `stg_value`,
+//! `gs://value-raw` and `sub.value` match. `_` is a boundary because snake_case names are
+//! where a value most often sits: tables, columns, files. A non-ASCII neighbour counts as a
+//! boundary, because text with no spaces between words must not hide a value. Side checks
+//! apply only where the value's own edge is a letter or digit: `/opt/value` still matches
+//! inside `mnt/opt/value`, and `value_` inside `x_value_y`.
 
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use regex::bytes::Regex;
@@ -33,21 +35,28 @@ pub struct Matcher {
     unicode: Vec<(usize, Regex)>,
 }
 
+/// A character that continues a shell variable name, so `dehydrate` must brace a key it
+/// follows. Not the matching boundary: that is `glued`.
 pub(crate) fn word(b: u8) -> bool {
     b.is_ascii_alphanumeric() || b == b'_'
+}
+
+/// A neighbour that makes an occurrence part of a longer word.
+fn glued(b: u8) -> bool {
+    b.is_ascii_alphanumeric()
 }
 
 /// `None` when this occurrence is inside a longer word, else whether it is strict.
 fn classify(value: &[u8], hay: &[u8], start: usize, end: usize) -> Option<bool> {
     let before = start.checked_sub(1).map(|i| hay[i]);
     let after = hay.get(end).copied();
-    let first_is_word = value.first().is_some_and(|b| word(*b));
-    let last_is_word = value.last().is_some_and(|b| word(*b));
-    if (first_is_word && before.is_some_and(word)) || (last_is_word && after.is_some_and(word)) {
+    let first_glues = value.first().is_some_and(|b| glued(*b));
+    let last_glues = value.last().is_some_and(|b| glued(*b));
+    if (first_glues && before.is_some_and(glued)) || (last_glues && after.is_some_and(glued)) {
         return None;
     }
-    let loose = (first_is_word && matches!(before, Some(b'-' | b'.')))
-        || (last_is_word && after == Some(b'-'));
+    let loose = (first_glues && matches!(before, Some(b'-' | b'.' | b'_')))
+        || (last_glues && matches!(after, Some(b'-' | b'_')));
     Some(!loose)
 }
 
@@ -172,13 +181,61 @@ mod tests {
             ("sub.zqxvalue", (0, 1)),
             ("zqxvalues", (0, 0)),
             ("azqxvalue", (0, 0)),
-            ("pre_zqxvalue", (0, 0)),
-            ("zqxvalue_post", (0, 0)),
+            ("9zqxvalue", (0, 0)),
             ("zqxvalue9", (0, 0)),
+            ("pre_zqxvalue", (0, 1)),
+            ("zqxvalue_post", (0, 1)),
             ("zqxvalue zqxvalue-x", (1, 1)),
         ] {
             assert_eq!(tiers(&m, hay), want, "{hay}");
         }
+    }
+
+    #[test]
+    fn a_value_inside_a_snake_case_name_is_a_loose_hit() {
+        let m = matcher(&["zqxvalue"]);
+        for (hay, want) in [
+            ("zqxvalue_incident_summary", (0, 1)),
+            ("stg_zqxvalue_orders", (0, 1)),
+            ("fct_orders_zqxvalue", (0, 1)),
+            ("select * from stg_zqxvalue", (0, 1)),
+            ("_zqxvalue_", (0, 1)),
+            ("a__zqxvalue__b", (0, 1)),
+            ("ZQXVALUE_ORDERS", (0, 1)),
+            ("zqxvalue_a zqxvalue", (1, 1)),
+            ("zqxvalue_zqxvalue", (0, 2)),
+        ] {
+            assert_eq!(tiers(&m, hay), want, "{hay}");
+        }
+    }
+
+    #[test]
+    fn a_value_glued_to_a_letter_or_digit_inside_a_snake_case_name_stays_hidden() {
+        let m = matcher(&["zqxvalue"]);
+        for hay in ["stg_xzqxvalue_orders", "stg_zqxvalue2_orders", "zqxvalues_x", "x_azqxvalue"] {
+            assert_eq!(tiers(&m, hay), (0, 0), "{hay}");
+        }
+    }
+
+    #[test]
+    fn a_value_that_holds_an_underscore_matches_whole_and_in_a_longer_name() {
+        let m = matcher(&["zqx_value"]);
+        assert_eq!(tiers(&m, "zqx_value"), (1, 0));
+        assert_eq!(tiers(&m, "stg_zqx_value_orders"), (0, 1));
+        assert_eq!(tiers(&m, "zqx_values"), (0, 0));
+        assert_eq!(tiers(&m, "azqx_value"), (0, 0));
+        // An underscore edge needs no boundary on that side, as `/opt/value` needs none.
+        let m = matcher(&["_zqxvalue"]);
+        assert_eq!(tiers(&m, "stg_zqxvalue"), (1, 0));
+        assert_eq!(tiers(&m, "x_zqxvalue_orders"), (0, 1));
+        assert_eq!(tiers(&m, "x_zqxvalues"), (0, 0));
+    }
+
+    #[test]
+    fn redact_braces_a_key_before_an_underscore() {
+        let m = matcher(&["zqxvalue"]);
+        assert_eq!(m.redact("stg_zqxvalue_orders.sql"), "stg_${KEY_0}_orders.sql");
+        assert_eq!(m.redact("stg_zqxvalue.sql"), "stg_$KEY_0.sql");
     }
 
     #[test]

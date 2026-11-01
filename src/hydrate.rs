@@ -319,12 +319,47 @@ mod tests {
     }
 
     #[test]
-    fn whole_words_only_with_underscore_as_a_word_character() {
+    fn a_value_glued_to_a_letter_or_digit_is_left_alone() {
         let pairs = [("KEY", "zqxvalue")];
-        for same in ["zqxvalues", "azqxvalue", "pre_zqxvalue", "zqxvalue_post", "zqxvalue9"] {
+        for same in ["zqxvalues", "azqxvalue", "zqxvalue9", "stg_xzqxvalue_orders", "stg_zqxvalue2"] {
             assert_eq!(replaced(same, &pairs), same);
         }
         assert_eq!(replaced("gs://zqxvalue-raw", &pairs), "gs://$KEY-raw");
+    }
+
+    #[test]
+    fn a_value_inside_a_snake_case_name_is_replaced_and_braced_before_an_underscore() {
+        let pairs = [("KEY", "zqxvalue")];
+        for (input, want) in [
+            ("zqxvalue_incident_summary", "${KEY}_incident_summary"),
+            ("stg_zqxvalue_orders", "stg_${KEY}_orders"),
+            ("fct_orders_zqxvalue", "fct_orders_$KEY"),
+            ("pre_zqxvalue.sql", "pre_$KEY.sql"),
+            ("zqxvalue_zqxvalue", "${KEY}_$KEY"),
+            ("ZQXVALUE_ORDERS", "${KEY}_ORDERS"),
+        ] {
+            assert_eq!(replaced(input, &pairs), want, "{input}");
+        }
+        let held = [("KEY", "zqx_value")];
+        assert_eq!(replaced("stg_zqx_value_orders", &held), "stg_${KEY}_orders");
+    }
+
+    #[test]
+    fn a_snake_case_name_round_trips() {
+        let pairs = [("KEY", "zqxvalue"), ("HELD", "zqx_other")];
+        let listed = pairs.iter().map(|(k, _)| k.to_string()).collect();
+        let values = pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
+        for wet in [
+            "zqxvalue_incident_summary",
+            "stg_zqxvalue_orders and fct_orders_zqxvalue",
+            "zqxvalue_zqxvalue_zqx_other_x",
+            "_zqxvalue_",
+            "stg_zqx_other",
+        ] {
+            let dry = replace_values(wet.as_bytes(), &matcher(&pairs));
+            assert!(!String::from_utf8_lossy(&dry).contains("zqx"), "{wet}");
+            assert_eq!(fill(&dry, &listed, &values).text, wet.as_bytes(), "{wet}");
+        }
     }
 
     #[test]

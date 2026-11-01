@@ -7,4 +7,4 @@ Written by $ZQ_NAME in 日本$ZQ_CLIENT語.
 
 Left alone: $HOME, ${HOME}, $1, $$, $VAR, $(date), ${ZQ_CLIENT:-x}, $ZQ_UNLISTED, {{ZQ_CLIENT}}.
 No trailing newline, and a CRLF here:
-zqxalphas, zqxalpha_old and prezqxalpha are other words.
+zqxalphas and prezqxalpha are other words; ${ZQ_CLIENT}_old is a name.
