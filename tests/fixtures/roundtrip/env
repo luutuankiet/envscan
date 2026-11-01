@@ -1,0 +1,8 @@
+# Invented values for the round trip test.
+ZQ_CLIENT=zqxalpha
+ZQ_CLIENT_LONG=zqxalpha-holdings
+ZQ_REPO="zqxbeta_warehouse"
+export ZQ_HOST=zqxgamma.example
+ZQ_MOUNT=/srv/zqxdelta/
+ZQ_ACCOUNT=zqxowner.zqxgamma.example
+ZQ_NAME=zqxmüller

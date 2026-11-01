@@ -7,7 +7,7 @@ pub enum Exit {
     Clean = 0,
     /// Leaks found, strict or loose.
     Leaks = 1,
-    /// No rules loaded; candidates are still printed.
+    /// No rules loaded; candidates are still printed. For `hydrate`, a listed key has no value.
     NoRules = 2,
     /// Usage or IO error, missing path, nothing scanned.
     Error = 3,

@@ -14,14 +14,24 @@ pub fn discover(explicit: Option<&Path>, cwd: &Path) -> Option<PathBuf> {
     if let Some(path) = explicit {
         return Some(path.to_path_buf());
     }
+    at_repo_root(cwd, ".env")
+}
+
+/// The key list used when no `.env` exists, as on a fresh machine. Found the way `discover`
+/// finds `.env`. When a `.env` exists, its key list is the `.env.example` beside it.
+pub fn discover_example(cwd: &Path) -> Option<PathBuf> {
+    at_repo_root(cwd, ".env.example")
+}
+
+fn at_repo_root(cwd: &Path, name: &str) -> Option<PathBuf> {
     if let Some(top) = rev_parse(cwd, "--show-toplevel") {
-        let candidate = cwd.join(top).join(".env");
+        let candidate = cwd.join(top).join(name);
         if candidate.is_file() {
             return Some(candidate);
         }
     }
     let common = cwd.join(rev_parse(cwd, "--git-common-dir")?).canonicalize().ok()?;
-    let candidate = common.parent()?.join(".env");
+    let candidate = common.parent()?.join(name);
     candidate.is_file().then_some(candidate)
 }
 

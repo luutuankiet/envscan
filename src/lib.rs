@@ -2,11 +2,13 @@
 //!
 //! `cli` parses, `env` finds and reads the `.env`, `matcher` holds the known-value rules,
 //! `walker` decides what is in scope, `scan` runs them, `report` is the output shape.
+//! `hydrate` moves text between `$KEY` and real values.
 //! Each later subcommand is a variant of `cli::Command` plus its own module.
 
 pub mod cli;
 pub mod env;
 pub mod exit;
+pub mod hydrate;
 pub mod matcher;
 pub mod report;
 pub mod scan;
@@ -26,5 +28,7 @@ pub fn run() -> Exit {
     };
     match cli.command {
         cli::Command::Scan(args) => scan::run(&args),
+        cli::Command::Hydrate(args) => hydrate::run_hydrate(&args),
+        cli::Command::Dehydrate(args) => hydrate::run_dehydrate(&args),
     }
 }
