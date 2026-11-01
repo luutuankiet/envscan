@@ -16,6 +16,8 @@ from a local `.env`, extracts broad candidates, and can ask a vendor model to ju
 - **No agent attribution in commits, pull requests, issues or release notes.** Commits
   use the account's noreply address, set in this clone's git config; set it in any new one.
 - **A report never contains a value outside `--full`.** Known-value hits print by key.
+- **Published text names one specific sensitive thing by a bare `$KEY`, never by a prose
+  description.** `envscan hydrate` resolves it. The scanner cannot catch a stand-in.
 
 ## Layout
 
