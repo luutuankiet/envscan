@@ -1,0 +1,554 @@
+[
+{
+"file": "logs/run-1182.log",
+"line": 3,
+"value": "142.250.72.16",
+"p": 0.02
+},
+{
+"file": "logs/run-1182.log",
+"line": 3,
+"value": "storage.googleapis.com",
+"p": 0.03
+},
+{
+"file": "logs/run-1182.log",
+"line": 4,
+"value": "db1.internal",
+"p": 0.94
+},
+{
+"file": "logs/run-1182.log",
+"line": 5,
+"value": "10.20.30.41",
+"p": 0.78
+},
+{
+"file": "logs/run-1182.log",
+"line": 6,
+"value": "10.20.30.41",
+"p": 0.82
+},
+{
+"file": "logs/run-1182.log",
+"line": 8,
+"value": "db2.internal",
+"p": 0.94
+},
+{
+"file": "logs/run-1182.log",
+"line": 12,
+"value": "gs://quill-curated-eu",
+"p": 0.91
+},
+{
+"file": "logs/run-1182.log",
+"line": 14,
+"value": "api.github.com",
+"p": 0.02
+},
+{
+"file": "logs/run-1182.log",
+"line": 14,
+"value": "repos/pallets",
+"p": 0.03
+},
+{
+"file": "logs/run-1182.log",
+"line": 15,
+"value": "<HOME>/alice/work/quill",
+"p": 0.95
+},
+{
+"file": "logs/run-1182.log",
+"line": 17,
+"value": "483920117462",
+"p": 0.94
+},
+{
+"file": "logs/run-1182.log",
+"line": 18,
+"value": "8.8.8.8",
+"p": 0.02
+},
+{
+"file": "logs/run-1182.log",
+"line": 18,
+"value": "1.1.1.1",
+"p": 0.02
+},
+{
+"file": "logs/run-1182.log",
+"line": 19,
+"value": "0.0.0.0",
+"p": 0.03
+},
+{
+"file": "logs/run-1182.log",
+"line": 19,
+"value": "127.0.0.1",
+"p": 0.03
+},
+{
+"file": "logs/run-1182.log",
+"line": 20,
+"value": "10.2.3.4",
+"p": 0.03
+},
+{
+"file": "logs/run-1182.log",
+"line": 27,
+"value": "etl-runner-02.corp.lan",
+"p": 0.97
+},
+{
+"file": "config/pipeline.json",
+"line": 2,
+"value": "veldquiver-etl-core",
+"p": 0.3
+},
+{
+"file": "config/pipeline.json",
+"line": 3,
+"value": "data-platform",
+"p": 0.4
+},
+{
+"file": "config/pipeline.json",
+"line": 5,
+"value": "quill-dwh-prod-4821",
+"p": 0.89
+},
+{
+"file": "config/pipeline.json",
+"line": 10,
+"value": "gs://acme-raw-bucket",
+"p": 0.89
+},
+{
+"file": "config/pipeline.json",
+"line": 11,
+"value": "s3://bwf-landing-prod",
+"p": 0.9
+},
+{
+"file": "config/pipeline.json",
+"line": 12,
+"value": "example.com",
+"p": 0.06
+},
+{
+"file": "config/pipeline.json",
+"line": 12,
+"value": "sample.csv",
+"p": 0.04
+},
+{
+"file": "config/pipeline.json",
+"line": 14,
+"value": "db1.internal",
+"p": 0.93
+},
+{
+"file": "config/pipeline.json",
+"line": 15,
+"value": "grafana.brambleway.lan",
+"p": 0.96
+},
+{
+"file": "config/pipeline.json",
+"line": 16,
+"value": "ops<AT>brambleway-foods.com",
+"p": 0.9
+},
+{
+"file": "config/pipeline.json",
+"line": 16,
+"value": "data-alerts",
+"p": 0.37
+},
+{
+"file": "config/pipeline.json",
+"line": 17,
+"value": "dbt-core",
+"p": 0.02
+},
+{
+"file": "config/pipeline.json",
+"line": 17,
+"value": "dbt-bigquery",
+"p": 0.02
+},
+{
+"file": "config/pipeline.json",
+"line": 20,
+"value": "github.com",
+"p": 0.02
+},
+{
+"file": "config/pipeline.json",
+"line": 20,
+"value": "dbt-labs/dbt-utils",
+"p": 0.02
+},
+{
+"file": "config/pipeline.json",
+"line": 21,
+"value": "github.com",
+"p": 0.05
+},
+{
+"file": "config/pipeline.json",
+"line": 21,
+"value": "veldquiver/dbt-utils-fork",
+"p": 0.44
+},
+{
+"file": "config/pipeline.json",
+"line": 22,
+"value": "483920117462",
+"p": 0.89
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 9,
+"value": "db1.internal",
+"p": 0.87
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 10,
+"value": "db2.internal",
+"p": 0.89
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 11,
+"value": "etl-runner-02.corp.lan",
+"p": 0.95
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 17,
+"value": "10.20.30.0/24",
+"p": 0.66
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 18,
+"value": "Veldquiver",
+"p": 0.84
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 24,
+"value": "True",
+"p": 0.02
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 26,
+"value": "False",
+"p": 0.02
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 35,
+"value": "status.github.com",
+"p": 0.03
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 35,
+"value": "api/status.json",
+"p": 0.02
+},
+{
+"file": "scripts/check_hosts.py",
+"line": 37,
+"value": "<HOME>/alice/work/quill/hosts-report.txt",
+"p": 0.93
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 4,
+"value": "quill-dwh-prod-4821",
+"p": 0.96
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 5,
+"value": "<USERS>/bob.kline/Downloads/quill_exports",
+"p": 0.96
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 6,
+"value": "gs://acme-raw-bucket",
+"p": 0.92
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 13,
+"value": "backup<AT>nas01.home.lan",
+"p": 0.97
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 14,
+"value": "pypi.org",
+"p": 0.01
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 21,
+"value": "hooks.veldquiver.io",
+"p": 0.8
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 22,
+"value": "192.168.7.12",
+"p": 0.93
+},
+{
+"file": "scripts/sync_raw.sh",
+"line": 22,
+"value": "quill-sync",
+"p": 0.48
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 1,
+"value": "Brambleway Foods",
+"p": 0.84
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 3,
+"value": "Brambleway",
+"p": 0.7
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 5,
+"value": "<HOME>/alice/dev/bwf-dbt-models",
+"p": 0.96
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 5,
+"value": "bwf-dbt-models",
+"p": 0.92
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 6,
+"value": "dbt-labs/jaffle-shop",
+"p": 0.02
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 7,
+"value": "s3://bwf-landing-prod",
+"p": 0.93
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 8,
+"value": "grafana.brambleway.lan",
+"p": 0.96
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 9,
+"value": "priya.r<AT>brambleway-foods.com",
+"p": 0.96
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 9,
+"value": "Priya Ramaswamy",
+"p": 0.82
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 14,
+"value": "api.stripe.com",
+"p": 0.03
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 15,
+"value": "bwf-weekly-2026-10-27.xlsx",
+"p": 0.3
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 18,
+"value": "@dmorlask",
+"p": 0.82
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 19,
+"value": "nas01.home.lan",
+"p": 0.97
+},
+{
+"file": "notes/handoff-bramble.md",
+"line": 24,
+"value": "pre-commit",
+"p": 0.02
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 4,
+"value": "microsoft/presidio",
+"p": 0.02
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 6,
+"value": "anthropics/claude-code",
+"p": 0.03
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 10,
+"value": "Veldquiver Analytics",
+"p": 0.86
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 11,
+"value": "kubernetes.io",
+"p": 0.02
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 15,
+"value": "<USERS>/alice.n/projects/quill",
+"p": 0.94
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 16,
+"value": "quill-stg-vm-03",
+"p": 0.95
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 16,
+"value": "europe-west1-b",
+"p": 0.41
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 17,
+"value": "gs://gcp-public-data-landsat",
+"p": 0.03
+},
+{
+"file": "notes/scratch-ideas.md",
+"line": 18,
+"value": "acme-internal-tools",
+"p": 0.89
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 1,
+"value": "Veldquiver Analytics",
+"p": 0.89
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 4,
+"value": "veldquiver/etl-core",
+"p": 0.84
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 4,
+"value": "dbt-labs/dbt-core",
+"p": 0.02
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 5,
+"value": "quill-dwh-prod-4821",
+"p": 0.9
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 5,
+"value": "quill-dwh-stg-4821",
+"p": 0.88
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 6,
+"value": "gs://acme-raw-bucket",
+"p": 0.95
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 6,
+"value": "gs://quill-curated-eu",
+"p": 0.93
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 7,
+"value": "etl-runner-02.corp.lan",
+"p": 0.97
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 10,
+"value": "<HOME>/alice/work/quill/backfill.sh",
+"p": 0.95
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 10,
+"value": "dbt-core",
+"p": 0.03
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 11,
+"value": "10.20.30.41",
+"p": 0.78
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 12,
+"value": "db1.internal",
+"p": 0.93
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 13,
+"value": "brambleway_q3_sales.csv",
+"p": 0.81
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 17,
+"value": "alice.nguyen<AT>veldquiver.io",
+"p": 0.95
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 18,
+"value": "docs.getdbt.com",
+"p": 0.02
+},
+{
+"file": "notes/session-2026-10-30.md",
+"line": 18,
+"value": "full-refresh",
+"p": 0.02
+}
+]

@@ -18,6 +18,8 @@ struct Run {
 fn scan(dir: &TempDir, args: &[&str]) -> Run {
     let env = dir.path().join("rules/vals").display().to_string();
     let out = Command::new(env!("CARGO_BIN_EXE_envscan"))
+        // No saved tier: an operator's `live` must never send fixture lines.
+        .env("HOME", "/nonexistent-envscan-test-home")
         .args(["scan", "--env", &env])
         .args(args)
         .current_dir(dir.path())

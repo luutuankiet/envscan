@@ -23,6 +23,30 @@ pub enum Command {
     Dehydrate(DehydrateArgs),
     /// Record how `tmp/` files were handled, and decide whether a topic folder can be cleared.
     Promotion(crate::promotion::PromotionArgs),
+    /// Save machine-wide settings.
+    Config(ConfigArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct ConfigArgs {
+    #[command(subcommand)]
+    pub command: ConfigCommand,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ConfigCommand {
+    /// Save the judgement tier. Live also needs a key; auto and unset run plain with a reminder.
+    Tier {
+        #[arg(value_enum)]
+        tier: TierChoice,
+    },
+}
+
+#[derive(clap::ValueEnum, Clone, Copy, Debug)]
+pub enum TierChoice {
+    Auto,
+    Live,
+    Plain,
 }
 
 #[derive(Args, Debug)]
@@ -81,4 +105,7 @@ pub struct ScanArgs {
     /// secret-named files stay excluded.
     #[arg(long)]
     pub no_ignore: bool,
+    /// Under the live tier, refuse to send more candidates than this.
+    #[arg(long, value_name = "N", default_value_t = crate::judge::DEFAULT_MAX_CANDIDATES)]
+    pub max_candidates: usize,
 }

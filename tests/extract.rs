@@ -201,6 +201,8 @@ struct Run {
 
 fn scan(dir: &Path, args: &[&str]) -> Run {
     let out = Command::new(env!("CARGO_BIN_EXE_envscan"))
+        // No saved tier: an operator's `live` must never send fixture lines.
+        .env("HOME", "/nonexistent-envscan-test-home")
         .arg("scan")
         .args(args)
         .current_dir(dir)
@@ -332,6 +334,8 @@ fn a_candidates_first_location_is_shown_by_key() {
 fn stdin_is_extracted_too() {
     let dir = tree(&[]);
     let mut child = Command::new(env!("CARGO_BIN_EXE_envscan"))
+        // No saved tier: an operator's `live` must never send fixture lines.
+        .env("HOME", "/nonexistent-envscan-test-home")
         .args(["scan", "--stdin", "--env", ".env", "--json"])
         .current_dir(dir.path())
         .stdin(std::process::Stdio::piped())

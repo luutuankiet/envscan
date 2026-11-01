@@ -20,6 +20,9 @@ pub struct Report {
     pub candidates_total: usize,
     pub candidates_by_kind: BTreeMap<String, usize>,
     pub candidates: Vec<Candidate>,
+    /// Present only when the live tier ran.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub judgement: Option<Judgement>,
     /// Lists every data file in the text form too, as `--full` does for everything else.
     #[serde(skip)]
     pub full: bool,
@@ -32,6 +35,21 @@ pub struct Skipped {
     pub non_utf8: usize,
     pub secret_named: usize,
     pub long_lines: usize,
+}
+
+/// What the live tier did, in counts.
+#[derive(Serialize, Debug, Default, Clone)]
+pub struct Judgement {
+    pub lines_sent: usize,
+    pub candidates_sent: usize,
+    /// Occurrences above the threshold.
+    pub kept: usize,
+    pub rejected: usize,
+    /// Lines never sent because they, or their path, hold a known value. Their candidates stay
+    /// listed, with no `p`.
+    pub lines_withheld: usize,
+    /// Files scanned for known values only: not named by the caller, or not an eligible type.
+    pub files_known_only: usize,
 }
 
 #[derive(Serialize, Debug, Default, Clone)]
@@ -60,6 +78,11 @@ pub struct Candidate {
     pub files: usize,
     pub hits: usize,
     pub first: String,
+    /// The highest verdict and its kind, under the live tier.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub p: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub judged_kind: Option<String>,
     /// The real value and every location, under `--full` only.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
@@ -100,6 +123,12 @@ impl Report {
             out.push_str(&format!(
                 "\nEXTRACTOR ERRORS  {}: those lines may hold more candidates than listed\n",
                 self.extractor_errors
+            ));
+        }
+        if let Some(j) = &self.judgement {
+            out.push_str(&format!(
+                "\nJUDGEMENT  {} lines sent, {} candidates: {} kept, {} rejected; {} lines withheld for a known value; {} files known-value only\n",
+                j.lines_sent, j.candidates_sent, j.kept, j.rejected, j.lines_withheld, j.files_known_only
             ));
         }
         self.push_candidates(&mut out);

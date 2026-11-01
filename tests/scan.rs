@@ -29,6 +29,8 @@ impl Run {
 
 fn run_with_stdin(cwd: &Path, args: &[&str], stdin: &[u8]) -> Run {
     let mut child = Command::new(env!("CARGO_BIN_EXE_envscan"))
+        // No saved tier: an operator's `live` must never send fixture lines.
+        .env("HOME", "/nonexistent-envscan-test-home")
         .args(args)
         .current_dir(cwd)
         .stdin(Stdio::piped())
@@ -540,6 +542,8 @@ fn a_closed_stdout_is_not_clean() {
     let t = dir.path().join("t");
     write(&t, "ok.md", "clean\n");
     let mut child = Command::new(env!("CARGO_BIN_EXE_envscan"))
+        // No saved tier: an operator's `live` must never send fixture lines.
+        .env("HOME", "/nonexistent-envscan-test-home")
         .args(["scan", ".", "--env", &env])
         .current_dir(&t)
         .stdout(Stdio::piped())
