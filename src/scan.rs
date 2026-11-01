@@ -3,8 +3,9 @@
 use crate::cli::ScanArgs;
 use crate::env::{self, EnvFile};
 use crate::exit::Exit;
+use crate::extract::{self, Found};
 use crate::matcher::{Hit, Matcher};
-use crate::report::{Leak, Report, Skipped};
+use crate::report::{Candidate, Leak, Report, Skipped};
 use crate::walker::{self, Options};
 use rayon::prelude::*;
 use std::collections::BTreeMap;
@@ -55,7 +56,7 @@ pub fn run(args: &ScanArgs) -> Exit {
         if let Err(e) = std::io::stdin().read_to_end(&mut bytes) {
             return fail(&format!("cannot read stdin: {e}"));
         }
-        let outcome = scan_bytes(&matcher, &bytes);
+        let outcome = scan_bytes(&matcher, &bytes, !args.known_only);
         scan.absorb(STDIN_LABEL, outcome);
     }
 
@@ -73,7 +74,9 @@ pub fn run(args: &ScanArgs) -> Exit {
         .par_iter()
         .map(|item| {
             let name_hits = matcher.find(item.name.as_bytes());
-            (name_hits, item.is_file.then(|| scan_file(&matcher, &item.path)))
+            // Data files take known-value matching only, and their headers are never read.
+            let broad = !args.known_only && !extract::is_data_file(&item.name);
+            (name_hits, item.is_file.then(|| scan_file(&matcher, &item.path, broad)))
         })
         .collect();
     for (item, (name_hits, outcome)) in walked.items.iter().zip(outcomes) {
@@ -99,6 +102,36 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs) -> Exit {
     leaks.sort_by(|a, b| (b.strict + b.loose).cmp(&(a.strict + a.loose)).then(a.key.cmp(&b.key)));
     let total_hits: usize = leaks.iter().map(|l| l.strict + l.loose).sum();
 
+    let candidates_total = scan.candidates.len();
+    let mut candidates_by_kind = BTreeMap::new();
+    for (kind, _) in scan.candidates.keys() {
+        *candidates_by_kind.entry(kind.to_string()).or_insert(0) += 1;
+    }
+    let mut ranked: Vec<((&'static str, String), Tally)> = scan.candidates.into_iter().collect();
+    ranked.sort_by(|((ka, va), a), ((kb, vb), b)| {
+        extract::weight(kb)
+            .cmp(&extract::weight(ka))
+            .then(b.files.cmp(&a.files))
+            .then(b.hits.cmp(&a.hits))
+            .then(ka.cmp(kb))
+            .then(va.cmp(vb))
+    });
+    if !args.full {
+        ranked.truncate(args.top);
+    }
+    let candidates = ranked
+        .into_iter()
+        .map(|((kind, value), tally)| Candidate {
+            kind: kind.to_string(),
+            masked: extract::mask(&value),
+            files: tally.files,
+            hits: tally.hits,
+            first: tally.first,
+            value: args.full.then_some(value),
+            at: tally.at,
+        })
+        .collect();
+
     let report = Report {
         tier: "plain".to_string(),
         rules_loaded,
@@ -106,7 +139,11 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs) -> Exit {
         env_unparsed_lines: env_file.unparsed_lines.clone(),
         files_scanned,
         skipped: scan.skipped,
+        extractor_errors: scan.extractor_errors,
         leaks,
+        candidates_total,
+        candidates_by_kind,
+        candidates,
         ..Report::default()
     };
     let rendered = if args.json { report.to_json() } else { report.to_text() };
@@ -132,36 +169,76 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs) -> Exit {
 
 /// The result of one input, before it is attributed to a display path.
 enum Outcome {
-    Scanned { hits: Vec<Hit>, bytes: Vec<u8> },
+    Scanned { hits: Vec<Hit>, bytes: Vec<u8>, broad: Broad },
     Large,
     Binary,
     NonUtf8,
     Unreadable(String),
 }
 
-fn scan_file(matcher: &Matcher, path: &Path) -> Outcome {
+/// What the extractor made of one input.
+#[derive(Default)]
+struct Broad {
+    /// `(line number, candidate)`, without any value the known-value rules already report.
+    found: Vec<(usize, Found)>,
+    long_lines: usize,
+    errors: usize,
+}
+
+fn extract_text(matcher: &Matcher, text: &str) -> Broad {
+    let mut broad = Broad::default();
+    for (i, line) in extract::lines(text).enumerate() {
+        if line.len() > extract::MAX_LINE_BYTES {
+            broad.long_lines += 1;
+            continue;
+        }
+        let extraction = extract::extract(line);
+        broad.errors += extraction.errors;
+        for found in extraction.found {
+            // Already a leak, by key: its mask would print part of a known value.
+            if matcher.find(found.value.as_bytes()).is_empty() {
+                broad.found.push((i + 1, found));
+            }
+        }
+    }
+    broad
+}
+
+/// One candidate across the scan.
+#[derive(Default)]
+struct Tally {
+    files: usize,
+    hits: usize,
+    first: String,
+    /// Every location, filled only under `--full`.
+    at: Vec<String>,
+    last_file: usize,
+}
+
+fn scan_file(matcher: &Matcher, path: &Path, extract: bool) -> Outcome {
     match std::fs::metadata(path) {
         Ok(meta) if meta.len() > MAX_FILE_BYTES => return Outcome::Large,
         Ok(_) => {}
         Err(e) => return Outcome::Unreadable(e.to_string()),
     }
     match std::fs::read(path) {
-        Ok(bytes) => scan_bytes(matcher, &bytes),
+        Ok(bytes) => scan_bytes(matcher, &bytes, extract),
         Err(e) => Outcome::Unreadable(e.to_string()),
     }
 }
 
-fn scan_bytes(matcher: &Matcher, bytes: &[u8]) -> Outcome {
+fn scan_bytes(matcher: &Matcher, bytes: &[u8], extract: bool) -> Outcome {
     if memchr::memchr(0, &bytes[..bytes.len().min(SNIFF_BYTES)]).is_some() {
         return Outcome::Binary;
     }
-    if std::str::from_utf8(bytes).is_err() {
+    let Ok(text) = std::str::from_utf8(bytes) else {
         return Outcome::NonUtf8;
-    }
+    };
+    let broad = if extract { extract_text(matcher, text) } else { Broad::default() };
     let hits = matcher.find(bytes);
     // Keep the text only when a hit needs its line number.
     let bytes = if hits.is_empty() { Vec::new() } else { bytes.to_vec() };
-    Outcome::Scanned { hits, bytes }
+    Outcome::Scanned { hits, bytes, broad }
 }
 
 fn line_of(bytes: &[u8], offset: usize) -> usize {
@@ -175,11 +252,23 @@ struct Scan<'a> {
     skipped: Skipped,
     errors: Vec<String>,
     leaks: BTreeMap<String, Leak>,
+    extractor_errors: usize,
+    candidates: BTreeMap<(&'static str, String), Tally>,
+    /// Counts absorbed inputs, so a candidate can tell a new file from its last one.
+    input: usize,
 }
 
 impl<'a> Scan<'a> {
     fn new(matcher: &'a Matcher, full: bool) -> Self {
-        Scan { matcher, full, scanned: 0, skipped: Skipped::default(), errors: Vec::new(), leaks: BTreeMap::new() }
+        Scan {
+            matcher,
+            full,
+            scanned: 0,
+            skipped: Skipped::default(), errors: Vec::new(), leaks: BTreeMap::new(),
+            extractor_errors: 0,
+            candidates: BTreeMap::new(),
+            input: 0,
+        }
     }
 
     /// A report path can hold a known value, so it is rewritten unless `--full` was asked for.
@@ -196,9 +285,27 @@ impl<'a> Scan<'a> {
 
     fn absorb(&mut self, display: &str, outcome: Outcome) {
         match outcome {
-            Outcome::Scanned { hits, bytes } => {
+            Outcome::Scanned { hits, bytes, broad } => {
                 self.scanned += 1;
+                self.input += 1;
                 let shown = self.shown(display);
+                self.skipped.long_lines += broad.long_lines;
+                self.extractor_errors += broad.errors;
+                for (line, found) in broad.found {
+                    let at = format!("{shown}:{line}");
+                    let tally = self.candidates.entry((found.shape, found.value)).or_default();
+                    if tally.hits == 0 {
+                        tally.first = at.clone();
+                    }
+                    if tally.last_file != self.input {
+                        tally.files += 1;
+                        tally.last_file = self.input;
+                    }
+                    tally.hits += 1;
+                    if self.full {
+                        tally.at.push(at);
+                    }
+                }
                 for hit in hits {
                     let at = format!("{shown}:{}", line_of(&bytes, hit.start));
                     self.record(&hit, at);

@@ -287,3 +287,28 @@ fn neither_command_writes_the_input_file() {
         assert_eq!(fs::read_to_string(dir.path().join("t.md")).unwrap(), "$KEY zqxvalue");
     }
 }
+
+/// The fixture's real text is dehydrated by exact written form, and that dehydrated form is what
+/// has to survive. It holds `$SRC_DIR`, `$LOG_DIR` and `$1`-style names that must pass through.
+#[test]
+fn the_broad_fixture_round_trips() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/broad/fixture");
+    let dir = dir_with(
+        "ZQ_A=Veldquiver Analytics\nZQ_B=veldquiver/etl-core\nZQ_C=quill-dwh-prod-4821\nZQ_D=gs://acme-raw-bucket\n\
+         ZQ_E=10.20.30.41\nZQ_F=db1.internal\nZQ_G=dmorlask\nZQ_H=Brambleway Foods\nZQ_I=483920117462\n",
+        None,
+    );
+    let mut replaced = 0;
+    for rel in ["config/pipeline.json", "logs/run-1182.log", "notes/handoff-bramble.md",
+        "notes/scratch-ideas.md", "notes/session-2026-10-30.md", "scripts/check_hosts.py", "scripts/sync_raw.sh"] {
+        let text = fs::read(root.join(rel)).unwrap();
+        let dry = dehydrate(dir.path(), &text);
+        assert_eq!(dry.code, 0, "{}", dry.stderr);
+        assert_ne!(dry.stdout, text, "{rel} should hold a planted value");
+        replaced += 1;
+        assert_round_trip(dir.path(), &dry.stdout, &dry.stdout);
+        let wet = hydrate(dir.path(), &dry.out());
+        assert_eq!(wet.stdout, text, "{rel}: the fixture's values are written in one case each");
+    }
+    assert_eq!(replaced, 7);
+}

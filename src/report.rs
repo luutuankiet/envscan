@@ -1,5 +1,5 @@
 //! The scan report. The field order and key names are a contract for `--json` readers.
-//! `data_files`, `candidates` and their counts stay empty until their packages fill them.
+//! `data_files` stays empty until its package fills it.
 
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -53,6 +53,11 @@ pub struct Candidate {
     pub files: usize,
     pub hits: usize,
     pub first: String,
+    /// The real value and every location, under `--full` only.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub at: Vec<String>,
 }
 
 impl Report {
@@ -83,7 +88,23 @@ impl Report {
                 leak.key, leak.strict, leak.loose, leak.at.join("  ")
             ));
         }
+        if self.extractor_errors > 0 {
+            out.push_str(&format!(
+                "\nEXTRACTOR ERRORS  {}: those lines may hold more candidates than listed\n",
+                self.extractor_errors
+            ));
+        }
         out.push_str(&format!("\nCANDIDATES  {}\n", self.candidates_total));
+        for c in &self.candidates {
+            out.push_str(&format!(
+                "  {:<12} {:<20} files {:>3}  hits {:>4}  {}\n",
+                c.kind,
+                c.value.as_deref().unwrap_or(&c.masked),
+                c.files,
+                c.hits,
+                if c.at.is_empty() { c.first.clone() } else { c.at.join("  ") }
+            ));
+        }
         out
     }
 }

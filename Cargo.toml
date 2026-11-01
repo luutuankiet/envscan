@@ -6,6 +6,7 @@ license = "MIT"
 
 [dependencies]
 aho-corasick = "1"
+fancy-regex = "0.14"
 clap = { version = "4", features = ["derive"] }
 ignore = "0.4"
 memchr = "2"
@@ -22,3 +23,7 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+# The fuzz golden runs 200,000 lines through every shape.
+[profile.dev.package."*"]
+opt-level = 3

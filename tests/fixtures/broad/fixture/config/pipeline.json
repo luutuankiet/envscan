@@ -1,0 +1,25 @@
+{
+  "name": "veldquiver-etl-core",
+  "owner": "data-platform",
+  "warehouse": {
+    "project": "quill-dwh-prod-4821",
+    "dataset": "analytics",
+    "location": "EU"
+  },
+  "sources": [
+    {"type": "gcs", "uri": "gs://acme-raw-bucket/daily/*.csv"},
+    {"type": "s3", "uri": "s3://bwf-landing-prod/exports/"},
+    {"type": "http", "uri": "https://example.com/data/sample.csv"}
+  ],
+  "postgres": {"host": "db1.internal", "port": 5432, "user": "etl_user"},
+  "metrics_endpoint": "https://grafana.brambleway.lan/api/push",
+  "alerts": {"email": "ops<AT>brambleway-foods.com", "slack": "#data-alerts"},
+  "dependencies": ["dbt-core", "dbt-bigquery", "sqlfluff"],
+  "python": "3.12",
+  "retry": {"max_attempts": 3, "backoff_seconds": 5},
+  "upstream": "https://github.com/dbt-labs/dbt-utils",
+  "fork": "https://github.com/veldquiver/dbt-utils-fork",
+  "aws_account": "483920117462",
+  "timezone": "UTC",
+  "enabled": true
+}

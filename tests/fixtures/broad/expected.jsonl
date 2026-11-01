@@ -1,0 +1,73 @@
+{"file": "config/pipeline.json", "line": 2, "found": [["veldquiver-etl-core", "slug"]]}
+{"file": "config/pipeline.json", "line": 3, "found": [["data-platform", "slug"]]}
+{"file": "config/pipeline.json", "line": 5, "found": [["quill-dwh-prod-4821", "slug"]]}
+{"file": "config/pipeline.json", "line": 10, "found": [["gs://acme-raw-bucket", "bucket"]]}
+{"file": "config/pipeline.json", "line": 11, "found": [["s3://bwf-landing-prod", "bucket"]]}
+{"file": "config/pipeline.json", "line": 12, "found": [["example.com", "url-host"], ["sample.csv", "filename"]]}
+{"file": "config/pipeline.json", "line": 14, "found": [["db1.internal", "hostname"]]}
+{"file": "config/pipeline.json", "line": 15, "found": [["grafana.brambleway.lan", "url-host"]]}
+{"file": "config/pipeline.json", "line": 16, "found": [["ops<AT>brambleway-foods.com", "email"], ["data-alerts", "slug"]]}
+{"file": "config/pipeline.json", "line": 17, "found": [["dbt-core", "slug"], ["dbt-bigquery", "slug"]]}
+{"file": "config/pipeline.json", "line": 20, "found": [["github.com", "url-host"], ["dbt-labs/dbt-utils", "gh-repo"]]}
+{"file": "config/pipeline.json", "line": 21, "found": [["github.com", "url-host"], ["veldquiver/dbt-utils-fork", "gh-repo"]]}
+{"file": "config/pipeline.json", "line": 22, "found": [["483920117462", "account-id"]]}
+{"file": "logs/run-1182.log", "line": 3, "found": [["142.250.72.16", "ip"], ["storage.googleapis.com", "hostname"]]}
+{"file": "logs/run-1182.log", "line": 4, "found": [["db1.internal", "hostname"]]}
+{"file": "logs/run-1182.log", "line": 5, "found": [["10.20.30.41", "ip"]]}
+{"file": "logs/run-1182.log", "line": 6, "found": [["10.20.30.41", "ip"]]}
+{"file": "logs/run-1182.log", "line": 8, "found": [["db2.internal", "hostname"]]}
+{"file": "logs/run-1182.log", "line": 12, "found": [["gs://quill-curated-eu", "bucket"]]}
+{"file": "logs/run-1182.log", "line": 14, "found": [["api.github.com", "url-host"], ["repos/pallets", "gh-repo"]]}
+{"file": "logs/run-1182.log", "line": 15, "found": [["<HOME>/alice/work/quill", "home-path"]]}
+{"file": "logs/run-1182.log", "line": 17, "found": [["483920117462", "account-id"]]}
+{"file": "logs/run-1182.log", "line": 18, "found": [["8.8.8.8", "ip"], ["1.1.1.1", "ip"]]}
+{"file": "logs/run-1182.log", "line": 19, "found": [["0.0.0.0", "ip"], ["127.0.0.1", "ip"]]}
+{"file": "logs/run-1182.log", "line": 20, "found": [["10.2.3.4", "ip"]]}
+{"file": "logs/run-1182.log", "line": 27, "found": [["etl-runner-02.corp.lan", "hostname"]]}
+{"file": "notes/handoff-bramble.md", "line": 1, "found": [["Brambleway Foods", "proper-noun"]]}
+{"file": "notes/handoff-bramble.md", "line": 3, "found": [["Brambleway", "proper-noun"]]}
+{"file": "notes/handoff-bramble.md", "line": 5, "found": [["<HOME>/alice/dev/bwf-dbt-models", "home-path"], ["bwf-dbt-models", "slug"]]}
+{"file": "notes/handoff-bramble.md", "line": 6, "found": [["dbt-labs/jaffle-shop", "owner-repo"]]}
+{"file": "notes/handoff-bramble.md", "line": 7, "found": [["s3://bwf-landing-prod", "bucket"]]}
+{"file": "notes/handoff-bramble.md", "line": 8, "found": [["grafana.brambleway.lan", "hostname"]]}
+{"file": "notes/handoff-bramble.md", "line": 9, "found": [["priya.r<AT>brambleway-foods.com", "email"], ["Priya Ramaswamy", "proper-noun"]]}
+{"file": "notes/handoff-bramble.md", "line": 14, "found": [["api.stripe.com", "url-host"]]}
+{"file": "notes/handoff-bramble.md", "line": 15, "found": [["bwf-weekly-2026-10-27.xlsx", "filename"]]}
+{"file": "notes/handoff-bramble.md", "line": 18, "found": [["@dmorlask", "handle"]]}
+{"file": "notes/handoff-bramble.md", "line": 19, "found": [["nas01.home.lan", "hostname"]]}
+{"file": "notes/handoff-bramble.md", "line": 24, "found": [["pre-commit", "slug"]]}
+{"file": "notes/scratch-ideas.md", "line": 4, "found": [["microsoft/presidio", "owner-repo"]]}
+{"file": "notes/scratch-ideas.md", "line": 6, "found": [["anthropics/claude-code", "owner-repo"]]}
+{"file": "notes/scratch-ideas.md", "line": 10, "found": [["Veldquiver Analytics", "proper-noun"]]}
+{"file": "notes/scratch-ideas.md", "line": 11, "found": [["kubernetes.io", "url-host"]]}
+{"file": "notes/scratch-ideas.md", "line": 15, "found": [["<USERS>/alice.n/projects/quill", "home-path"]]}
+{"file": "notes/scratch-ideas.md", "line": 16, "found": [["quill-stg-vm-03", "slug"], ["europe-west1-b", "slug"]]}
+{"file": "notes/scratch-ideas.md", "line": 17, "found": [["gs://gcp-public-data-landsat", "bucket"]]}
+{"file": "notes/scratch-ideas.md", "line": 18, "found": [["acme-internal-tools", "slug"]]}
+{"file": "notes/session-2026-10-30.md", "line": 1, "found": [["Veldquiver Analytics", "proper-noun"]]}
+{"file": "notes/session-2026-10-30.md", "line": 4, "found": [["veldquiver/etl-core", "owner-repo"], ["dbt-labs/dbt-core", "owner-repo"]]}
+{"file": "notes/session-2026-10-30.md", "line": 5, "found": [["quill-dwh-prod-4821", "slug"], ["quill-dwh-stg-4821", "slug"]]}
+{"file": "notes/session-2026-10-30.md", "line": 6, "found": [["gs://acme-raw-bucket", "bucket"], ["gs://quill-curated-eu", "bucket"]]}
+{"file": "notes/session-2026-10-30.md", "line": 7, "found": [["etl-runner-02.corp.lan", "hostname"]]}
+{"file": "notes/session-2026-10-30.md", "line": 10, "found": [["<HOME>/alice/work/quill/backfill.sh", "home-path"], ["dbt-core", "slug"]]}
+{"file": "notes/session-2026-10-30.md", "line": 11, "found": [["10.20.30.41", "ip"]]}
+{"file": "notes/session-2026-10-30.md", "line": 12, "found": [["db1.internal", "hostname"]]}
+{"file": "notes/session-2026-10-30.md", "line": 13, "found": [["brambleway_q3_sales.csv", "filename"]]}
+{"file": "notes/session-2026-10-30.md", "line": 17, "found": [["alice.nguyen<AT>veldquiver.io", "email"]]}
+{"file": "notes/session-2026-10-30.md", "line": 18, "found": [["docs.getdbt.com", "url-host"], ["full-refresh", "slug"]]}
+{"file": "scripts/check_hosts.py", "line": 9, "found": [["db1.internal", "hostname"]]}
+{"file": "scripts/check_hosts.py", "line": 10, "found": [["db2.internal", "hostname"]]}
+{"file": "scripts/check_hosts.py", "line": 11, "found": [["etl-runner-02.corp.lan", "hostname"]]}
+{"file": "scripts/check_hosts.py", "line": 17, "found": [["10.20.30.0/24", "ip"]]}
+{"file": "scripts/check_hosts.py", "line": 18, "found": [["Veldquiver", "proper-noun"]]}
+{"file": "scripts/check_hosts.py", "line": 24, "found": [["True", "proper-noun"]]}
+{"file": "scripts/check_hosts.py", "line": 26, "found": [["False", "proper-noun"]]}
+{"file": "scripts/check_hosts.py", "line": 35, "found": [["status.github.com", "url-host"], ["api/status.json", "gh-repo"]]}
+{"file": "scripts/check_hosts.py", "line": 37, "found": [["<HOME>/alice/work/quill/hosts-report.txt", "home-path"]]}
+{"file": "scripts/sync_raw.sh", "line": 4, "found": [["quill-dwh-prod-4821", "slug"]]}
+{"file": "scripts/sync_raw.sh", "line": 5, "found": [["<USERS>/bob.kline/Downloads/quill_exports", "home-path"]]}
+{"file": "scripts/sync_raw.sh", "line": 6, "found": [["gs://acme-raw-bucket", "bucket"]]}
+{"file": "scripts/sync_raw.sh", "line": 13, "found": [["backup<AT>nas01.home.lan", "email"]]}
+{"file": "scripts/sync_raw.sh", "line": 14, "found": [["pypi.org", "url-host"]]}
+{"file": "scripts/sync_raw.sh", "line": 21, "found": [["hooks.veldquiver.io", "url-host"]]}
+{"file": "scripts/sync_raw.sh", "line": 22, "found": [["192.168.7.12", "ip"], ["quill-sync", "slug"]]}
