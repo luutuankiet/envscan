@@ -82,6 +82,12 @@ impl Matcher {
         &self.rules
     }
 
+    /// The most bytes one match can span. Case folding can change a character's encoded
+    /// length, so this counts four bytes for each character of the value.
+    pub fn max_match_bytes(&self) -> usize {
+        self.rules.iter().map(|r| r.value.chars().count() * 4).max().unwrap_or(0)
+    }
+
     /// Every bounded occurrence, ordered by position.
     pub fn find(&self, hay: &[u8]) -> Vec<Hit> {
         let mut hits = Vec::new();

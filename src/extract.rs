@@ -35,14 +35,24 @@ const COMMON_CAPS: &[&str] = &[
     "Thursday", "Timezone", "Try", "Moved", "Done", "Starting",
 ];
 
+/// Data forms that are text, and so can be streamed through known-value matching.
+const TEXT_DATA_EXTENSIONS: &[&str] = &["csv", "tsv", "jsonl", "ndjson"];
+
 /// Data files take known-value matching only, and their headers are never read.
 const DATA_EXTENSIONS: &[&str] = &[
     "csv", "tsv", "jsonl", "ndjson", "xlsx", "xls", "parquet", "sqlite", "db", "avro", "orc", "hyper",
     "twbx", "tdsx",
 ];
 
-pub fn is_data_file(name: &str) -> bool {
-    name.rsplit_once('.').is_some_and(|(_, ext)| DATA_EXTENSIONS.contains(&ext.to_ascii_lowercase().as_str()))
+/// The lowercase extension of a data file, or `None` for any other name.
+pub fn data_format(name: &str) -> Option<String> {
+    let (_, ext) = name.rsplit_once('.')?;
+    let ext = ext.to_ascii_lowercase();
+    DATA_EXTENSIONS.contains(&ext.as_str()).then_some(ext)
+}
+
+pub fn is_text_data(format: &str) -> bool {
+    TEXT_DATA_EXTENSIONS.contains(&format)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -173,7 +183,10 @@ mod tests {
 
     #[test]
     fn data_files_are_known_by_extension_ignoring_case() {
-        assert!(is_data_file("a.CSV") && is_data_file("b.c.parquet"));
-        assert!(!is_data_file("csv") && !is_data_file("a.md"));
+        assert_eq!(data_format("a.CSV").as_deref(), Some("csv"));
+        assert_eq!(data_format("b.c.parquet").as_deref(), Some("parquet"));
+        assert_eq!(data_format("csv"), None);
+        assert_eq!(data_format("a.md"), None);
+        assert!(is_text_data("ndjson") && !is_text_data("xlsx"));
     }
 }

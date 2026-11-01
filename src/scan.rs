@@ -1,11 +1,12 @@
 //! `envscan scan`: load rules, walk, match, report, choose the exit code.
 
 use crate::cli::ScanArgs;
+use crate::data::{self, RuleHits, Streamed};
 use crate::env::{self, EnvFile};
 use crate::exit::Exit;
 use crate::extract::{self, Found};
 use crate::matcher::{Hit, Matcher};
-use crate::report::{Candidate, Leak, Report, Skipped};
+use crate::report::{Candidate, DataFile, Leak, Report, Skipped};
 use crate::walker::{self, Options};
 use rayon::prelude::*;
 use std::collections::BTreeMap;
@@ -74,9 +75,11 @@ pub fn run(args: &ScanArgs) -> Exit {
         .par_iter()
         .map(|item| {
             let name_hits = matcher.find(item.name.as_bytes());
-            // Data files take known-value matching only, and their headers are never read.
-            let broad = !args.known_only && !extract::is_data_file(&item.name);
-            (name_hits, item.is_file.then(|| scan_file(&matcher, &item.path, broad)))
+            let outcome = item.is_file.then(|| match extract::data_format(&item.name) {
+                Some(format) => scan_data_file(&matcher, &item.path, format, args.full),
+                None => scan_file(&matcher, &item.path, !args.known_only),
+            });
+            (name_hits, outcome)
         })
         .collect();
     for (item, (name_hits, outcome)) in walked.items.iter().zip(outcomes) {
@@ -98,6 +101,7 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs) -> Exit {
     let rules_loaded = scan.matcher.rules().len();
     let files_scanned = scan.scanned;
     let errors = scan.errors;
+    let unscanned = scan.data_files.iter().filter(|d| !d.scanned).count();
     let mut leaks: Vec<Leak> = scan.leaks.into_values().collect();
     leaks.sort_by(|a, b| (b.strict + b.loose).cmp(&(a.strict + a.loose)).then(a.key.cmp(&b.key)));
     let total_hits: usize = leaks.iter().map(|l| l.strict + l.loose).sum();
@@ -141,10 +145,11 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs) -> Exit {
         skipped: scan.skipped,
         extractor_errors: scan.extractor_errors,
         leaks,
+        data_files: scan.data_files,
         candidates_total,
         candidates_by_kind,
         candidates,
-        ..Report::default()
+        full: args.full,
     };
     let rendered = if args.json { report.to_json() } else { report.to_text() };
     let mut stdout = std::io::stdout();
@@ -156,7 +161,10 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs) -> Exit {
     for error in &errors {
         eprintln!("envscan: {error}");
     }
-    let exit = Exit::decide(total_hits, rules_loaded, files_scanned, errors.len());
+    if unscanned > 0 {
+        eprintln!("envscan: {unscanned} data files unscanned: this is not a clean result");
+    }
+    let exit = Exit::decide(total_hits, rules_loaded, files_scanned, errors.len() + unscanned);
     match exit {
         Exit::NoRules => eprintln!("envscan: 0 rules loaded: this is not a clean result"),
         Exit::Error if files_scanned == 0 && errors.is_empty() => {
@@ -170,6 +178,8 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs) -> Exit {
 /// The result of one input, before it is attributed to a display path.
 enum Outcome {
     Scanned { hits: Vec<Hit>, bytes: Vec<u8>, broad: Broad },
+    /// `hits` is `None` when the file was only listed.
+    Data { format: String, size: u64, hits: Option<BTreeMap<usize, RuleHits>> },
     Large,
     Binary,
     NonUtf8,
@@ -227,6 +237,24 @@ fn scan_file(matcher: &Matcher, path: &Path, extract: bool) -> Outcome {
     }
 }
 
+/// Headers are never read: an unscanned form is listed from its metadata alone.
+fn scan_data_file(matcher: &Matcher, path: &Path, format: String, full: bool) -> Outcome {
+    let size = match std::fs::metadata(path) {
+        Ok(meta) => meta.len(),
+        Err(e) => return Outcome::Unreadable(e.to_string()),
+    };
+    if !extract::is_text_data(&format) {
+        return Outcome::Data { format, size, hits: None };
+    }
+    let streamed = std::fs::File::open(path)
+        .and_then(|file| data::stream(matcher, file, if full { usize::MAX } else { AT_CAP }));
+    match streamed {
+        Ok(Streamed::Scanned(hits)) => Outcome::Data { format, size, hits: Some(hits) },
+        Ok(Streamed::NotText) => Outcome::Data { format, size, hits: None },
+        Err(e) => Outcome::Unreadable(e.to_string()),
+    }
+}
+
 fn scan_bytes(matcher: &Matcher, bytes: &[u8], extract: bool) -> Outcome {
     if memchr::memchr(0, &bytes[..bytes.len().min(SNIFF_BYTES)]).is_some() {
         return Outcome::Binary;
@@ -252,6 +280,7 @@ struct Scan<'a> {
     skipped: Skipped,
     errors: Vec<String>,
     leaks: BTreeMap<String, Leak>,
+    data_files: Vec<DataFile>,
     extractor_errors: usize,
     candidates: BTreeMap<(&'static str, String), Tally>,
     /// Counts absorbed inputs, so a candidate can tell a new file from its last one.
@@ -265,6 +294,7 @@ impl<'a> Scan<'a> {
             full,
             scanned: 0,
             skipped: Skipped::default(), errors: Vec::new(), leaks: BTreeMap::new(),
+            data_files: Vec::new(),
             extractor_errors: 0,
             candidates: BTreeMap::new(),
             input: 0,
@@ -311,12 +341,43 @@ impl<'a> Scan<'a> {
                     self.record(&hit, at);
                 }
             }
+            Outcome::Data { format, size, hits } => {
+                let shown = self.shown(display);
+                let scanned = hits.is_some();
+                if scanned {
+                    self.scanned += 1;
+                }
+                for (rule, rule_hits) in hits.unwrap_or_default() {
+                    self.record_data(rule, &rule_hits, &shown);
+                }
+                self.data_files.push(DataFile {
+                    path: shown,
+                    format,
+                    shape: format!("{size} bytes"),
+                    scanned,
+                });
+            }
             Outcome::Large => self.skipped.large += 1,
             Outcome::Binary => self.skipped.binary += 1,
             Outcome::NonUtf8 => self.skipped.non_utf8 += 1,
             Outcome::Unreadable(e) => {
                 let shown = self.matcher.redact(display);
                 self.errors.push(format!("cannot read {shown}: {e}"));
+            }
+        }
+    }
+
+    fn record_data(&mut self, rule: usize, hits: &RuleHits, shown: &str) {
+        let full = self.full;
+        for key in &self.matcher.rules()[rule].keys {
+            let leak = self.leaks.entry(key.clone()).or_insert_with(|| Leak { key: key.clone(), ..Leak::default() });
+            leak.strict += hits.strict;
+            leak.loose += hits.loose;
+            for line in &hits.lines {
+                let at = format!("{shown}:{line}");
+                if (full || leak.at.len() < AT_CAP) && !leak.at.contains(&at) {
+                    leak.at.push(at);
+                }
             }
         }
     }

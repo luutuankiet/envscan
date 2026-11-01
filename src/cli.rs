@@ -12,7 +12,8 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    /// Scan paths for known values. Exit 0 clean, 1 leaks, 2 no rules, 3 usage or IO error.
+    /// Scan paths for known values. Exit 0 clean, 1 leaks, 2 no rules, 3 usage or IO error,
+    /// nothing scanned, or a data file left unscanned.
     Scan(ScanArgs),
     /// Fill each listed $KEY from `.env` and print the text. Never writes in place. Exit 0
     /// resolved, 2 a listed key has no value or no key list exists, 3 usage or IO error.
