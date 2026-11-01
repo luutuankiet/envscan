@@ -1,0 +1,30 @@
+2026-10-30T09:14:02Z INFO  starting job sync_raw (attempt 1)
+2026-10-30T09:14:02Z INFO  using python 3.12.1 on linux
+2026-10-30T09:14:03Z INFO  resolved storage.googleapis.com to 142.250.72.16
+2026-10-30T09:14:03Z INFO  connecting to db1.internal:5432 as etl_user
+2026-10-30T09:14:04Z WARN  slow handshake with 10.20.30.41
+2026-10-30T09:14:09Z ERROR connect timeout host=10.20.30.41 port=5432
+2026-10-30T09:14:09Z INFO  retrying in 5s
+2026-10-30T09:14:14Z INFO  connected via replica db2.internal
+2026-10-30T09:14:15Z INFO  loaded 18234 rows into staging.orders
+2026-10-30T09:14:15Z INFO  loaded 922 rows into staging.customers
+2026-10-30T09:14:16Z DEBUG cache hit ratio 0.83
+2026-10-30T09:14:16Z INFO  writing parquet to gs://quill-curated-eu/orders/dt=2026-10-30/
+2026-10-30T09:14:18Z INFO  upload complete (41.2 MiB)
+2026-10-30T09:14:18Z INFO  notifying https://api.github.com/repos/pallets/flask mirror check skipped
+2026-10-30T09:14:19Z INFO  cwd=<HOME>/alice/work/quill
+2026-10-30T09:14:19Z INFO  runner image ghcr.io/actions/runner:2.319.1
+2026-10-30T09:14:20Z INFO  aws sts caller account=483920117462
+2026-10-30T09:14:20Z INFO  dns fallback 8.8.8.8 and 1.1.1.1
+2026-10-30T09:14:21Z INFO  bound to 0.0.0.0:8080 and 127.0.0.1:9090
+2026-10-30T09:14:21Z INFO  version string 10.2.3.4 of the driver
+2026-10-30T09:14:22Z INFO  job finished in 20.1s
+2026-10-30T09:14:22Z INFO  next run scheduled at 10:14Z
+2026-10-30T09:15:00Z INFO  heartbeat ok
+2026-10-30T09:16:00Z INFO  heartbeat ok
+2026-10-30T09:17:00Z WARN  disk usage 81% on /data
+2026-10-30T09:18:00Z INFO  heartbeat ok
+2026-10-30T09:19:31Z INFO  user dmorlask opened a shell on etl-runner-02.corp.lan
+2026-10-30T09:20:00Z INFO  heartbeat ok
+2026-10-30T09:21:12Z INFO  pulled postgres:16 and redis:7.2
+2026-10-30T09:22:00Z INFO  heartbeat ok

@@ -1,0 +1,807 @@
+[
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 1,
+  "value": "Veldquiver Analytics",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 4,
+  "value": "veldquiver/etl-core",
+  "kind": "repo",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 4,
+  "value": "github.com",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 4,
+  "value": "dbt-labs/dbt-core",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 5,
+  "value": "quill-dwh-prod-4821",
+  "kind": "cloud-project",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 5,
+  "value": "quill-dwh-stg-4821",
+  "kind": "cloud-project",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 6,
+  "value": "gs://acme-raw-bucket",
+  "kind": "bucket",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 6,
+  "value": "gs://quill-curated-eu",
+  "kind": "bucket",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 7,
+  "value": "etl-runner-02.corp.lan",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 10,
+  "value": "<HOME>/alice/work/quill/backfill.sh",
+  "kind": "home-path",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 10,
+  "value": "dbt-core",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 10,
+  "value": "1.8.2",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 11,
+  "value": "10.20.30.41",
+  "kind": "ip",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 12,
+  "value": "db1.internal",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 13,
+  "value": "brambleway",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 16,
+  "value": "Brambleway Foods",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 17,
+  "value": "alice.nguyen<AT>veldquiver.io",
+  "kind": "email",
+  "planted": true
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 18,
+  "value": "https://docs.getdbt.com/reference/commands/run",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 19,
+  "value": "numpy",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 19,
+  "value": "2.1.0",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/session-2026-10-30.md",
+  "line": 19,
+  "value": "pandas",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 4,
+  "value": "quill-dwh-prod-4821",
+  "kind": "cloud-project",
+  "planted": true
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 5,
+  "value": "<USERS>/bob.kline/Downloads/quill_exports",
+  "kind": "home-path",
+  "planted": true
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 6,
+  "value": "gs://acme-raw-bucket",
+  "kind": "bucket",
+  "planted": true
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 13,
+  "value": "nas01.home.lan",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 14,
+  "value": "https://pypi.org/simple/requests/",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 15,
+  "value": "pip",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 15,
+  "value": "requests",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 15,
+  "value": "2.32.3",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 21,
+  "value": "veldquiver.io",
+  "kind": "domain",
+  "planted": true
+ },
+ {
+  "file": "scripts/sync_raw.sh",
+  "line": 22,
+  "value": "192.168.7.12",
+  "kind": "ip",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 2,
+  "value": "3.12.1",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 3,
+  "value": "storage.googleapis.com",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 3,
+  "value": "142.250.72.16",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 4,
+  "value": "db1.internal",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 5,
+  "value": "10.20.30.41",
+  "kind": "ip",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 6,
+  "value": "10.20.30.41",
+  "kind": "ip",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 8,
+  "value": "db2.internal",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 12,
+  "value": "gs://quill-curated-eu",
+  "kind": "bucket",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 14,
+  "value": "https://api.github.com/repos/pallets/flask",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 15,
+  "value": "<HOME>/alice/work/quill",
+  "kind": "home-path",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 16,
+  "value": "ghcr.io/actions/runner:2.319.1",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 17,
+  "value": "483920117462",
+  "kind": "account-id",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 18,
+  "value": "8.8.8.8",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 18,
+  "value": "1.1.1.1",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 19,
+  "value": "0.0.0.0",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 19,
+  "value": "127.0.0.1",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 20,
+  "value": "10.2.3.4",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 27,
+  "value": "dmorlask",
+  "kind": "username",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 27,
+  "value": "etl-runner-02.corp.lan",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 29,
+  "value": "postgres:16",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "logs/run-1182.log",
+  "line": 29,
+  "value": "redis:7.2",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 2,
+  "value": "veldquiver-etl-core",
+  "kind": "repo",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 5,
+  "value": "quill-dwh-prod-4821",
+  "kind": "cloud-project",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 10,
+  "value": "gs://acme-raw-bucket",
+  "kind": "bucket",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 11,
+  "value": "s3://bwf-landing-prod",
+  "kind": "bucket",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 12,
+  "value": "https://example.com/data/sample.csv",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 14,
+  "value": "db1.internal",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 15,
+  "value": "grafana.brambleway.lan",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 16,
+  "value": "ops<AT>brambleway-foods.com",
+  "kind": "email",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 17,
+  "value": "dbt-core",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 17,
+  "value": "dbt-bigquery",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 17,
+  "value": "sqlfluff",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 18,
+  "value": "3.12",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 20,
+  "value": "https://github.com/dbt-labs/dbt-utils",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 21,
+  "value": "veldquiver/dbt-utils-fork",
+  "kind": "repo",
+  "planted": true
+ },
+ {
+  "file": "config/pipeline.json",
+  "line": 22,
+  "value": "483920117462",
+  "kind": "account-id",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 1,
+  "value": "Brambleway Foods",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 3,
+  "value": "Brambleway",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 5,
+  "value": "bwf-dbt-models",
+  "kind": "repo",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 5,
+  "value": "<HOME>/alice/dev/bwf-dbt-models",
+  "kind": "home-path",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 6,
+  "value": "dbt-labs/jaffle-shop",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 7,
+  "value": "s3://bwf-landing-prod",
+  "kind": "bucket",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 8,
+  "value": "grafana.brambleway.lan",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 9,
+  "value": "Priya Ramaswamy",
+  "kind": "person",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 9,
+  "value": "priya.r<AT>brambleway-foods.com",
+  "kind": "email",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 14,
+  "value": "https://api.stripe.com/v1/charges",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 15,
+  "value": "bwf",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 18,
+  "value": "@dmorlask",
+  "kind": "username",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 19,
+  "value": "nas01.home.lan",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 24,
+  "value": "sqlfluff",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 24,
+  "value": "pre-commit",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 24,
+  "value": "uv",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 24,
+  "value": "ruff",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/handoff-bramble.md",
+  "line": 24,
+  "value": "0.6.9",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 6,
+  "value": "requests",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 9,
+  "value": "db1.internal",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 10,
+  "value": "db2.internal",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 11,
+  "value": "etl-runner-02.corp.lan",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 12,
+  "value": "pypi.org",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 13,
+  "value": "github.com",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 17,
+  "value": "10.20.30.0/24",
+  "kind": "ip",
+  "planted": true
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 18,
+  "value": "Veldquiver",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 35,
+  "value": "https://status.github.com/api/status.json",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "scripts/check_hosts.py",
+  "line": 37,
+  "value": "<HOME>/alice/work/quill/hosts-report.txt",
+  "kind": "home-path",
+  "planted": true
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 3,
+  "value": "ollama",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 3,
+  "value": "llama3.2",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 4,
+  "value": "presidio",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 4,
+  "value": "microsoft/presidio",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 5,
+  "value": "gitleaks",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 5,
+  "value": "trufflehog",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 6,
+  "value": "anthropics/claude-code",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 7,
+  "value": "node",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 7,
+  "value": "20.11.1",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 7,
+  "value": "bun",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 7,
+  "value": "1.1.30",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 10,
+  "value": "Veldquiver Analytics",
+  "kind": "client",
+  "planted": true
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 11,
+  "value": "kubernetes",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 11,
+  "value": "https://kubernetes.io/docs/home/",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 15,
+  "value": "<USERS>/alice.n/projects/quill",
+  "kind": "home-path",
+  "planted": true
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 16,
+  "value": "quill-stg-vm-03",
+  "kind": "hostname",
+  "planted": true
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 16,
+  "value": "europe-west1-b",
+  "kind": "region",
+  "planted": true
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 17,
+  "value": "gs://gcp-public-data-landsat",
+  "kind": "decoy",
+  "planted": false
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 18,
+  "value": "acme-internal-tools",
+  "kind": "repo",
+  "planted": true
+ },
+ {
+  "file": "notes/scratch-ideas.md",
+  "line": 19,
+  "value": "CHANGELOG.md",
+  "kind": "decoy",
+  "planted": false
+ }
+]
