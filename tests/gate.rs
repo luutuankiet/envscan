@@ -240,6 +240,26 @@ fn a_loose_hit_on_a_warn_key_neither_warns_nor_denies() {
     assert!(!run.stderr.contains("SOFT_WORD"), "{}", run.stderr);
 }
 
+/// `_` is a boundary in the shared matcher, so a value inside a snake_case name denies. It is a
+/// loose hit, so a warn key there stays quiet, as it does beside a `-`.
+#[test]
+fn a_value_inside_a_snake_case_name_denies_and_a_warn_key_there_stays_quiet() {
+    let lab = lab();
+    let cwd = &lab.repo;
+    fs::write(cwd.join("model.sql"), format!("select * from stg_{PLANTED}_orders\n")).unwrap();
+    let run = gate_bash(&lab, cwd, "git add model.sql && git commit -m model");
+    assert_denied(&run, "PLANTED_TOKEN", "snake_case commit");
+    let input = serde_json::json!({ "args": ["issue", "create", "--title", "t", "--body", format!("see {PLANTED}_raw")] });
+    let hook = mcp_hook(cwd, "mcp__gh-cli__gh", input);
+    assert_denied(&gate(&lab, cwd, &hook), "PLANTED_TOKEN", "snake_case issue body");
+    reset(&lab, cwd);
+
+    fs::write(cwd.join("notes.txt"), format!("stg_{SOFT}_x\n")).unwrap();
+    let run = gate_bash(&lab, cwd, "git add notes.txt && git commit -m notes");
+    assert_clean(&run, "snake_case warn hit");
+    assert!(!run.stderr.contains("SOFT_WORD"), "{}", run.stderr);
+}
+
 #[test]
 fn scan_reports_warn_keys_apart_from_leaks() {
     let lab = lab();

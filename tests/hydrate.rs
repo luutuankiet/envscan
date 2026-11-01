@@ -110,21 +110,35 @@ fn bytes_that_are_not_utf8_round_trip() {
     assert_round_trip(dir.path(), input, input);
 }
 
-/// The stated cost of "whole words only": a key touching a word character fills to a longer
+/// The stated cost of "whole words only": a key touching a letter or digit fills to a longer
 /// word, which dehydrate leaves alone, as the scanner does. This is the one way the round trip
-/// does not hold, so write such a name as its own key.
+/// does not hold, so write such a name as its own key. An underscore is not such a neighbour.
 #[test]
-fn a_key_touching_a_word_character_does_not_come_back() {
+fn a_key_touching_a_letter_or_digit_does_not_come_back() {
     let dir = dir_with("KEY=zqxvalue\n", None);
     for (input, wet) in [
-        ("${KEY}_raw", "zqxvalue_raw"),
         ("${KEY}s", "zqxvalues"),
+        ("${KEY}2_raw", "zqxvalue2_raw"),
         ("pre$KEY", "prezqxvalue"),
         ("$KEY$KEY", "zqxvaluezqxvalue"),
     ] {
         let run = hydrate(dir.path(), input);
         assert_eq!(run.out(), wet);
         assert_eq!(dehydrate(dir.path(), wet.as_bytes()).out(), wet);
+    }
+}
+
+#[test]
+fn a_key_inside_a_snake_case_name_comes_back_braced() {
+    let dir = dir_with("KEY=zqxvalue\nHELD=zqx_other\n", None);
+    for (dry, wet) in [
+        ("${KEY}_incident_summary", "zqxvalue_incident_summary"),
+        ("stg_${KEY}_orders", "stg_zqxvalue_orders"),
+        ("fct_orders_$KEY.sql", "fct_orders_zqxvalue.sql"),
+        ("${KEY}_${HELD}_x", "zqxvalue_zqx_other_x"),
+    ] {
+        assert_eq!(hydrate(dir.path(), dry).out(), wet);
+        assert_eq!(dehydrate(dir.path(), wet.as_bytes()).out(), dry);
     }
 }
 

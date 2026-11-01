@@ -356,30 +356,19 @@ fn a_data_file_is_not_extracted_but_is_still_matched() {
     assert_eq!(json(&run)["candidates_total"], 0);
 }
 
-/// A known risk, pinned rather than fixed: `_` is a word character, so a known value inside an
-/// underscore-joined name passes the matcher. The extractor surfaces such a name only when the
-/// name sits inside another shape. A bare one, the usual form of a table or column, passes both
-/// tiers with exit 0.
+/// `_` is a boundary, so a known value inside an underscore-joined name is a leak, bare or
+/// inside another shape. The shape is then not also a candidate: its mask would print part of
+/// the value. A value glued to a letter or digit stays hidden from both.
 #[test]
-fn a_known_value_in_an_underscore_name_surfaces_only_through_another_shape() {
+fn a_known_value_in_an_underscore_name_is_a_leak_whatever_shape_holds_it() {
     let v = VALUE;
-    let surfaced = [
-        (format!("x {v}_raw.txt"), "filename"),
-        (format!("x gs://{v}_raw"), "bucket"),
-        (format!("x {}/me/{v}_raw", home()), "home-path"),
-        (format!("x team/{v}_raw"), "owner-repo"),
-        (format!("x {v}_raw{}zqxmail.example", '@'), "email"),
-        (format!("x @{v}_raw"), "handle"),
-    ];
-    for (text, kind) in &surfaced {
-        let dir = tree(&[("a.md", &format!("{text}\n"))]);
-        let run = scan(dir.path(), ARGS);
-        assert_eq!(run.code, 0, "{kind}: the matcher does not see it");
-        let report = json(&run);
-        assert_eq!(report["candidates"][0]["kind"], *kind, "{text}");
-        assert_eq!(report["leaks"].as_array().unwrap().len(), 0);
-    }
     for text in [
+        format!("x {v}_raw.txt"),
+        format!("x gs://{v}_raw"),
+        format!("x {}/me/{v}_raw", home()),
+        format!("x team/{v}_raw"),
+        format!("x {v}_raw{}zqxmail.example", '@'),
+        format!("x @{v}_raw"),
         format!("select * from {v}_raw"),
         format!("select * from pre_{v}"),
         format!("{v}_raw_{v}"),
@@ -388,9 +377,13 @@ fn a_known_value_in_an_underscore_name_surfaces_only_through_another_shape() {
     ] {
         let dir = tree(&[("a.md", &format!("{text}\n"))]);
         let run = scan(dir.path(), ARGS);
-        assert_eq!(run.code, 0, "{text}");
+        assert_eq!(run.code, 1, "{text}");
         let report = json(&run);
+        assert_eq!(report["leaks"][0]["key"], "KEY", "{text}");
         assert_eq!(report["candidates_total"], 0, "{text}: {}", report["candidates"]);
-        assert_eq!(report["leaks"].as_array().unwrap().len(), 0, "{text}");
     }
+    let dir = tree(&[("a.md", &format!("select * from stg_x{v}_raw, {v}2_raw\n"))]);
+    let run = scan(dir.path(), ARGS);
+    assert_eq!(run.code, 0);
+    assert_eq!(json(&run)["leaks"].as_array().unwrap().len(), 0);
 }
