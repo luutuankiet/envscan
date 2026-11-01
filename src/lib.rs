@@ -3,6 +3,7 @@
 //! `cli` parses, `env` finds and reads the `.env`, `matcher` holds the known-value rules,
 //! `walker` decides what is in scope, `extract` finds broad candidates, `data` streams data files, `scan` runs them, `report` is the output shape.
 //! `hydrate` moves text between `$KEY` and real values.
+//! `promotion` keeps the record of what left `tmp/` and decides whether a folder can be cleared.
 //! Each later subcommand is a variant of `cli::Command` plus its own module.
 
 pub mod cli;
@@ -12,6 +13,7 @@ pub mod exit;
 pub mod extract;
 pub mod hydrate;
 pub mod matcher;
+pub mod promotion;
 pub mod report;
 pub mod scan;
 pub mod walker;
@@ -32,5 +34,6 @@ pub fn run() -> Exit {
         cli::Command::Scan(args) => scan::run(&args),
         cli::Command::Hydrate(args) => hydrate::run_hydrate(&args),
         cli::Command::Dehydrate(args) => hydrate::run_dehydrate(&args),
+        cli::Command::Promotion(args) => promotion::run(&args),
     }
 }

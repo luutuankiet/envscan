@@ -8,6 +8,7 @@ pub enum Exit {
     /// Leaks found, strict or loose.
     Leaks = 1,
     /// No rules loaded; candidates are still printed. For `hydrate`, a listed key has no value.
+    /// For `promotion add`, the repo has no commits or is shallow, so it has no identity.
     NoRules = 2,
     /// Usage or IO error, missing path, nothing scanned, or a data file left unscanned.
     Error = 3,
