@@ -8,7 +8,7 @@ use crate::exit::Exit;
 use crate::extract::{self, Found};
 use crate::judge;
 use crate::matcher::{Hit, Matcher};
-use crate::report::{Candidate, DataFile, Judgement, Leak, Report, Skipped};
+use crate::report::{Candidate, DataFile, Judgement, Leak, Report, Skipped, Unjudged};
 use crate::walker::{self, Options};
 use rayon::prelude::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -20,6 +20,14 @@ const SNIFF_BYTES: usize = 8192;
 /// Locations listed per key; `--full` lists every one.
 const AT_CAP: usize = 3;
 const STDIN_LABEL: &str = "<stdin>";
+/// Shapes that name one thing, listed even when rejected: the vendor's recall on them is not
+/// established, and the lists are short enough to read.
+const LISTED_WHEN_REJECTED: &[&str] = &["ip", "email", "home-path", "account-id", "bucket", "gh-repo"];
+const KNOWN_ONLY_FILE: &str = "known-only-file";
+const OVER_LIMIT_LINE: &str = "over-limit-line";
+const OVER_CAP_FILE: &str = "over-cap-file";
+
+type Tallies = BTreeMap<(&'static str, String), Tally>;
 
 pub fn run(args: &ScanArgs) -> Exit {
     let cwd = match std::env::current_dir() {
@@ -53,7 +61,10 @@ pub fn run(args: &ScanArgs) -> Exit {
         return Exit::Error;
     }
 
-    let mut scan = Scan::new(&matcher, args.full);
+    // Before stdin: it is absorbed as a known-only input, so it needs to know the tier.
+    let tier = Tier::choose(args);
+    let live = matches!(tier, Tier::Live { .. });
+    let mut scan = Scan::new(&matcher, args.full, live);
     if args.stdin {
         let mut bytes = Vec::new();
         if let Err(e) = std::io::stdin().read_to_end(&mut bytes) {
@@ -72,12 +83,10 @@ pub fn run(args: &ScanArgs) -> Exit {
     scan.errors.extend(walked.errors.iter().map(|e| matcher.redact(e)));
 
     // Only a path on the command line is named by the caller; a walked directory's files are not.
-    let tier = Tier::choose(args);
     let named: HashSet<PathBuf> = match tier {
         Tier::Live { .. } => roots.iter().filter_map(|r| cwd.join(r).canonicalize().ok()).collect(),
         _ => HashSet::new(),
     };
-    let any_extension = judge::stub_widens();
 
     // Sorted input and an order-keeping collect keep the report deterministic.
     let outcomes: Vec<(Vec<Hit>, Option<Outcome>)> = walked
@@ -88,7 +97,7 @@ pub fn run(args: &ScanArgs) -> Exit {
             let outcome = item.is_file.then(|| match extract::data_format(&item.name) {
                 Some(format) => scan_data_file(&matcher, &item.path, format, args.full),
                 None => {
-                    let sendable = named.contains(&item.path) && (any_extension || judge::eligible_name(&item.name));
+                    let sendable = named.contains(&item.path) && judge::eligible_name(&item.name);
                     scan_file(&matcher, &item.path, !args.known_only, sendable)
                 }
             });
@@ -143,7 +152,7 @@ impl Tier {
         match self {
             Tier::Plain => Ran { label: "plain".to_string(), judgement: None },
             Tier::Fallback(reason) => Ran::fallback(&reason),
-            Tier::Live { key } => match judge_pending(scan, &key, args.max_candidates) {
+            Tier::Live { key } => match judge_pending(scan, &key, args) {
                 Ok(judgement) => Ran { label: format!("live ({})", judge::MODEL), judgement: Some(judgement) },
                 Err(reason) => Ran::fallback(&reason),
             },
@@ -162,15 +171,21 @@ impl Ran {
     }
 }
 
-fn judge_pending(scan: &mut Scan, key: &str, max_candidates: usize) -> Result<Judgement, String> {
+fn judge_pending(scan: &mut Scan, key: &str, args: &ScanArgs) -> Result<Judgement, String> {
     let pending = std::mem::take(&mut scan.pending);
+    // Counted before dedupe, so a line shared with an uncapped file is still judged for that file.
+    let mut per_file: HashMap<usize, usize> = HashMap::new();
+    for flagged in pending.iter().filter(|f| !f.withheld) {
+        *per_file.entry(flagged.input).or_default() += flagged.found.len();
+    }
+    let over_cap = |f: &Flagged| !f.withheld && per_file[&f.input] > args.max_file_candidates;
     let mut request_of: HashMap<String, usize> = HashMap::new();
     let mut requests: Vec<judge::Line> = Vec::new();
     let mut lines_withheld = 0;
     for flagged in &pending {
         if flagged.withheld {
             lines_withheld += 1;
-        } else if !request_of.contains_key(flagged.text.as_str()) {
+        } else if !over_cap(flagged) && !request_of.contains_key(flagged.text.as_str()) {
             request_of.insert(flagged.text.clone(), requests.len());
             requests.push(judge::Line {
                 path: flagged.path.clone(),
@@ -183,10 +198,10 @@ fn judge_pending(scan: &mut Scan, key: &str, max_candidates: usize) -> Result<Ju
     eprintln!(
         "envscan: judging {} lines, {candidates_sent} candidates, about ${:.4}",
         requests.len(),
-        judge::estimate_usd(candidates_sent)
+        judge::estimate_usd(&requests)
     );
-    if candidates_sent > max_candidates {
-        return Err(format!("{candidates_sent} candidates, limit {max_candidates}"));
+    if candidates_sent > args.max_candidates {
+        return Err(format!("{candidates_sent} candidates, limit {}", args.max_candidates));
     }
     let client = judge::Client::from_env(key)?;
     let verdicts = judge::judge(&client, &requests)?;
@@ -198,20 +213,43 @@ fn judge_pending(scan: &mut Scan, key: &str, max_candidates: usize) -> Result<Ju
         files_known_only: scan.scanned.saturating_sub(scan.sendable_files),
         ..Judgement::default()
     };
-    let mut tallies: BTreeMap<(&'static str, String), Tally> = BTreeMap::new();
+    let mut tallies = Tallies::new();
+    let mut rejected = Tallies::new();
+    let mut unjudged: BTreeMap<&'static str, Tallies> = BTreeMap::new();
+    for (shape, value, at, input) in std::mem::take(&mut scan.known_only) {
+        unjudged.entry(KNOWN_ONLY_FILE).or_default().entry((shape, value)).or_default().add(&at, input, scan.full);
+    }
     for flagged in pending {
-        let line_verdicts = (!flagged.withheld).then(|| &verdicts[request_of[flagged.text.as_str()]]);
+        let capped = over_cap(&flagged);
+        let line_verdicts = (!flagged.withheld && !capped).then(|| &verdicts[request_of[flagged.text.as_str()]]);
+        let unjudged_reason = match line_verdicts {
+            _ if capped => Some(OVER_CAP_FILE),
+            Some(None) => Some(OVER_LIMIT_LINE),
+            _ => None,
+        };
         for (i, found) in flagged.found.into_iter().enumerate() {
-            let verdict = line_verdicts.map(|v| &v[i]);
-            if let Some(verdict) = verdict {
-                if verdict.p > judge::THRESHOLD {
-                    judgement.kept += 1;
-                } else {
-                    judgement.rejected += 1;
-                    continue;
-                }
+            if let Some(reason) = unjudged_reason {
+                let tally = unjudged.entry(reason).or_default().entry((found.shape, found.value)).or_default();
+                tally.add(&flagged.at, flagged.input, scan.full);
+                continue;
             }
-            let tally = tallies.entry((found.shape, found.value)).or_default();
+            let verdict = line_verdicts.and_then(|v| v.as_ref()).map(|v| &v[i]);
+            let list = match verdict {
+                Some(v) if v.p > judge::THRESHOLD => {
+                    judgement.kept += 1;
+                    &mut tallies
+                }
+                Some(_) => {
+                    judgement.rejected += 1;
+                    if !LISTED_WHEN_REJECTED.contains(&found.shape) {
+                        continue;
+                    }
+                    judgement.rejected_listed += 1;
+                    &mut rejected
+                }
+                None => &mut tallies,
+            };
+            let tally = list.entry((found.shape, found.value)).or_default();
             tally.add(&flagged.at, flagged.input, scan.full);
             if let Some(verdict) = verdict {
                 if tally.p.is_none_or(|p| verdict.p > p) {
@@ -222,12 +260,41 @@ fn judge_pending(scan: &mut Scan, key: &str, max_candidates: usize) -> Result<Ju
         }
     }
     scan.candidates = tallies;
+    scan.rejected = rejected;
+    scan.unjudged = unjudged;
     Ok(judgement)
 }
 
 fn fail(message: &str) -> Exit {
     eprintln!("envscan: {message}");
     Exit::Error
+}
+
+fn ranked(tallies: Tallies) -> Vec<((&'static str, String), Tally)> {
+    let mut ranked: Vec<((&'static str, String), Tally)> = tallies.into_iter().collect();
+    ranked.sort_by(|((ka, va), a), ((kb, vb), b)| {
+        extract::weight(kb)
+            .cmp(&extract::weight(ka))
+            .then(b.files.cmp(&a.files))
+            .then(b.hits.cmp(&a.hits))
+            .then(ka.cmp(kb))
+            .then(va.cmp(vb))
+    });
+    ranked
+}
+
+fn candidate(((kind, value), tally): ((&'static str, String), Tally), full: bool) -> Candidate {
+    Candidate {
+        kind: kind.to_string(),
+        masked: extract::mask(&value),
+        files: tally.files,
+        hits: tally.hits,
+        first: tally.first,
+        p: tally.p,
+        judged_kind: tally.kind,
+        value: full.then_some(value),
+        at: tally.at,
+    }
 }
 
 fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs, ran: Ran, warn: &[String]) -> Exit {
@@ -247,32 +314,35 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs, ran: Ran, warn: &[Str
     for (kind, _) in scan.candidates.keys() {
         *candidates_by_kind.entry(kind.to_string()).or_insert(0) += 1;
     }
-    let mut ranked: Vec<((&'static str, String), Tally)> = scan.candidates.into_iter().collect();
-    ranked.sort_by(|((ka, va), a), ((kb, vb), b)| {
-        extract::weight(kb)
-            .cmp(&extract::weight(ka))
-            .then(b.files.cmp(&a.files))
-            .then(b.hits.cmp(&a.hits))
-            .then(ka.cmp(kb))
-            .then(va.cmp(vb))
-    });
+    let mut ranked = ranked(scan.candidates);
     if !args.full {
         ranked.truncate(args.top);
     }
-    let candidates = ranked
-        .into_iter()
-        .map(|((kind, value), tally)| Candidate {
-            kind: kind.to_string(),
-            masked: extract::mask(&value),
-            files: tally.files,
-            hits: tally.hits,
-            first: tally.first,
-            p: tally.p,
-            judged_kind: tally.kind,
-            value: args.full.then_some(value),
-            at: tally.at,
-        })
-        .collect();
+    let candidates = ranked.into_iter().map(|entry| candidate(entry, args.full)).collect();
+    let live = ran.judgement.is_some();
+    let rejected = live.then(|| self::ranked(scan.rejected).into_iter().map(|e| candidate(e, args.full)).collect());
+    let mut unjudged_by_reason = scan.unjudged;
+    let unjudged = live.then(|| {
+        [KNOWN_ONLY_FILE, OVER_LIMIT_LINE, OVER_CAP_FILE]
+            .into_iter()
+            .flat_map(|reason| {
+                let tallies = unjudged_by_reason.remove(reason).unwrap_or_default();
+                self::ranked(tallies).into_iter().map(move |entry| {
+                    let c = candidate(entry, args.full);
+                    Unjudged {
+                        kind: c.kind,
+                        masked: c.masked,
+                        reason: reason.to_string(),
+                        files: c.files,
+                        hits: c.hits,
+                        first: c.first,
+                        value: c.value,
+                        at: c.at,
+                    }
+                })
+            })
+            .collect()
+    });
 
     let report = Report {
         tier: ran.label,
@@ -289,6 +359,8 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs, ran: Ran, warn: &[Str
         candidates_by_kind,
         candidates,
         judgement: ran.judgement,
+        rejected,
+        unjudged,
         full: args.full,
     };
     let rendered = if args.json { report.to_json() } else { report.to_text() };
@@ -452,30 +524,39 @@ fn line_of(bytes: &[u8], offset: usize) -> usize {
 struct Scan<'a> {
     matcher: &'a Matcher,
     full: bool,
+    live: bool,
     scanned: usize,
     skipped: Skipped,
     errors: Vec<String>,
     leaks: BTreeMap<String, Leak>,
     data_files: Vec<DataFile>,
     extractor_errors: usize,
-    candidates: BTreeMap<(&'static str, String), Tally>,
+    candidates: Tallies,
     pending: Vec<Flagged>,
+    /// `(shape, value, location, input)` of each candidate in a file that may not be sent.
+    known_only: Vec<(&'static str, String, String, usize)>,
+    rejected: Tallies,
+    unjudged: BTreeMap<&'static str, Tallies>,
     sendable_files: usize,
     /// Counts absorbed inputs, so a candidate can tell a new file from its last one.
     input: usize,
 }
 
 impl<'a> Scan<'a> {
-    fn new(matcher: &'a Matcher, full: bool) -> Self {
+    fn new(matcher: &'a Matcher, full: bool, live: bool) -> Self {
         Scan {
             matcher,
             full,
+            live,
             scanned: 0,
             skipped: Skipped::default(), errors: Vec::new(), leaks: BTreeMap::new(),
             data_files: Vec::new(),
             extractor_errors: 0,
             candidates: BTreeMap::new(),
             pending: Vec::new(),
+            known_only: Vec::new(),
+            rejected: BTreeMap::new(),
+            unjudged: BTreeMap::new(),
             sendable_files: 0,
             input: 0,
         }
@@ -514,6 +595,10 @@ impl<'a> Scan<'a> {
                             found,
                             withheld: withheld || path_holds_known,
                         });
+                    }
+                } else if self.live {
+                    for (line, found) in &broad.found {
+                        self.known_only.push((found.shape, found.value.clone(), format!("{shown}:{line}"), self.input));
                     }
                 }
                 for (line, found) in broad.found {
