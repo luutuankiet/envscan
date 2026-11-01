@@ -163,7 +163,7 @@ fn answer(request: &Value, auth: &str, p_of: &HashMap<(String, usize, String), f
     json!({"answers": answers})
 }
 
-fn scan(world: &World, url: Option<&str>, widen: bool, key: &str) -> Output {
+fn scan(world: &World, url: Option<&str>, key: &str) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_envscan"));
     command
         .current_dir(world.root.path())
@@ -171,13 +171,9 @@ fn scan(world: &World, url: Option<&str>, widen: bool, key: &str) -> Output {
         .args(FILES)
         .env("HOME", world.home.path())
         .env("TYPESAFE_API_KEY", key)
-        .env_remove("ENVSCAN_JEV_ENDPOINT")
-        .env_remove("ENVSCAN_JEV_STUB_ALL_EXTENSIONS");
+        .env_remove("ENVSCAN_JEV_ENDPOINT");
     if let Some(url) = url {
         command.env("ENVSCAN_JEV_ENDPOINT", url);
-    }
-    if widen {
-        command.env("ENVSCAN_JEV_STUB_ALL_EXTENSIONS", "1");
     }
     command.output().unwrap()
 }
@@ -244,10 +240,10 @@ fn eligible_files() -> Vec<&'static str> {
 }
 
 #[test]
-fn the_shipped_filter_replays_to_40_flagged_and_39_of_59() {
+fn the_shipped_filter_replays_to_58_flagged_and_55_of_59() {
     let world = world("live");
     let (url, seen) = stub(&world);
-    let out = scan(&world, Some(&url), false, FAKE_KEY);
+    let out = scan(&world, Some(&url), FAKE_KEY);
     let report = report(&out);
     assert_eq!(report["tier"], "live (jev-1.14.0)", "{}", String::from_utf8_lossy(&out.stderr));
     assert_eq!(out.status.code(), Some(0));
@@ -255,61 +251,12 @@ fn the_shipped_filter_replays_to_40_flagged_and_39_of_59() {
     assert!(seen.unknown.is_empty(), "values with no recorded p: {:?}", seen.unknown);
     assert_eq!(seen.bad_auth, 0);
     assert_eq!(seen.state_keys, HashSet::from(["file".to_string(), "line".to_string()]));
-    // Only the listed extensions leave: the .json and .log files get known-value matching only.
-    let eligible: HashSet<String> = eligible_files().iter().map(|f| f.to_string()).collect();
-    assert_eq!(seen.files, eligible);
-    let all = score(&report, FILES);
-    eprintln!("shipped filter: {all:?}");
-    assert_eq!(all, Score { flagged: 40, true_pos: all.true_pos, planted: 59, found: 39 });
-}
-
-#[test]
-fn every_extension_replays_to_the_recorded_58_flagged_and_55_of_59() {
-    let world = world("live");
-    let (url, seen) = stub(&world);
-    let out = scan(&world, Some(&url), true, FAKE_KEY);
-    let report = report(&out);
-    assert_eq!(report["tier"], "live (jev-1.14.0)", "{}", String::from_utf8_lossy(&out.stderr));
-    let seen = seen.lock().unwrap();
-    assert!(seen.unknown.is_empty(), "values with no recorded p: {:?}", seen.unknown);
+    // Every fixture file is an eligible type now, so all of them are sent.
+    assert_eq!(eligible_files().len(), FILES.len());
     assert_eq!(seen.files.len(), FILES.len());
     let all = score(&report, FILES);
-    eprintln!("every extension: {all:?}");
+    eprintln!("shipped filter: {all:?}");
     assert_eq!((all.flagged, all.planted, all.found), (58, 59, 55));
-}
-
-#[test]
-fn the_widening_switch_is_inert_without_a_loopback_stub() {
-    // No endpoint override: the switch must not widen, and the key is fake, so the vendor call
-    // fails and the run falls back. Nothing here may reach the network with a real key.
-    let world = world("live");
-    let mut command = Command::new(env!("CARGO_BIN_EXE_envscan"));
-    let out = command
-        .current_dir(world.root.path())
-        .args(["scan", "--env", "rules.env", "--json", "--max-candidates", "0"])
-        .args(FILES)
-        .env("HOME", world.home.path())
-        .env("TYPESAFE_API_KEY", FAKE_KEY)
-        .env("ENVSCAN_JEV_STUB_ALL_EXTENSIONS", "1")
-        .env_remove("ENVSCAN_JEV_ENDPOINT")
-        .output()
-        .unwrap();
-    let stderr = String::from_utf8_lossy(&out.stderr);
-    // The count printed before refusing covers the eligible files only.
-    let widened = scan_count(&world, true);
-    let shipped = scan_count(&world, false);
-    assert!(widened > shipped, "{widened} vs {shipped}");
-    assert!(stderr.contains(&format!("{shipped} candidates")), "{stderr}");
-    assert!(report(&out)["tier"].as_str().unwrap().starts_with("plain (fallback from live: "));
-}
-
-/// Candidates the binary would send, read from its count line, against a stub.
-fn scan_count(world: &World, widen: bool) -> usize {
-    let (url, _) = stub(world);
-    let out = scan(world, Some(&url), widen, FAKE_KEY);
-    let stderr = String::from_utf8_lossy(&out.stderr).to_string();
-    let line = stderr.lines().find(|l| l.contains("candidates, about $")).unwrap().to_string();
-    line.split(", ").nth(1).unwrap().split(' ').next().unwrap().parse().unwrap()
 }
 
 #[test]
@@ -325,7 +272,7 @@ fn a_stub_failure_discards_every_verdict() {
             let _ = stream.write_all(b"HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n");
         }
     });
-    let out = scan(&world, Some(&url), false, FAKE_KEY);
+    let out = scan(&world, Some(&url), FAKE_KEY);
     let report = report(&out);
     assert_eq!(report["tier"], "plain (fallback from live: http 500)");
     assert_eq!(out.status.code(), Some(0));
@@ -339,7 +286,7 @@ fn auto_and_plain_never_call() {
     for tier in ["auto", "plain"] {
         let world = world(tier);
         let (url, seen) = stub(&world);
-        let out = scan(&world, Some(&url), false, FAKE_KEY);
+        let out = scan(&world, Some(&url), FAKE_KEY);
         assert_eq!(report(&out)["tier"], "plain");
         assert_eq!(seen.lock().unwrap().requests, 0, "{tier}");
     }
@@ -404,27 +351,24 @@ fn a_repo_env_is_never_read_for_the_key() {
 }
 
 /// Opt-in: the real vendor, the key from `~/.config/envscan/env` or the environment, the shipped
-/// filter. Run with `cargo test --test judge -- --ignored --nocapture`. Costs about $0.002.
+/// filter. Run with `cargo test --test judge -- --ignored --nocapture`. Costs under $0.01.
 #[test]
 #[ignore]
 fn live_vendor_on_the_synthetic_fixture() {
     let key = envscan::config::api_key().expect("no vendor key on this machine");
     eprintln!("key: TYPESAFE_API_KEY, {} characters", key.chars().count());
     let world = world("live");
-    let out = scan(&world, None, false, &key);
+    let out = scan(&world, None, &key);
     let report = report(&out);
     eprintln!("tier: {}", report["tier"]);
     eprintln!("judgement: {}", report["judgement"]);
     assert_eq!(report["tier"], "live (jev-1.14.0)", "{}", String::from_utf8_lossy(&out.stderr));
     let all = score(&report, FILES);
-    let sent = score(&report, &eligible_files());
     eprintln!(
-        "all files: {all:?} precision {:.3} recall {:.3}\neligible files: {sent:?} precision {:.3} recall {:.3}",
+        "{all:?} precision {:.3} recall {:.3}",
         all.precision(),
-        all.recall(),
-        sent.precision(),
-        sent.recall()
+        all.recall()
     );
     assert!(all.precision() >= 0.90, "precision {:.3}", all.precision());
-    assert!(sent.recall() >= 0.88, "recall on the files sent {:.3}", sent.recall());
+    assert!(all.recall() >= 0.93, "recall {:.3}", all.recall());
 }

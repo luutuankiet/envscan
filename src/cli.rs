@@ -109,7 +109,12 @@ pub struct ScanArgs {
     /// secret-named files stay excluded.
     #[arg(long)]
     pub no_ignore: bool,
-    /// Under the live tier, refuse to send more candidates than this.
+    /// Under the live tier, the whole-run limit: over it nothing is sent, after printing the
+    /// estimate.
     #[arg(long, value_name = "N", default_value_t = crate::judge::DEFAULT_MAX_CANDIDATES)]
     pub max_candidates: usize,
+    /// Under the live tier, a file with more candidates than this sends nothing and lists them
+    /// as unjudged. The rest of the run proceeds.
+    #[arg(long, value_name = "N", default_value_t = crate::judge::DEFAULT_MAX_FILE_CANDIDATES)]
+    pub max_file_candidates: usize,
 }

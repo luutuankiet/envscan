@@ -183,8 +183,7 @@ never read for it. A line is only sent when all three hold:
 
 1. the file was named on the command line (a directory walk sends nothing, stdin
    is never sent);
-2. its extension is one of `md txt py sh sql yml yaml toml` (widening this is
-   issue #11);
+2. its extension is one of `md txt py sh sql yml yaml toml log json diff`;
 3. the line holds no known value (it is already a leak, and sending it would send
    the value).
 

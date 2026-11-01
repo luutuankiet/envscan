@@ -25,6 +25,14 @@ pub struct Report {
     /// Present only when the live tier ran.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub judgement: Option<Judgement>,
+    /// Specific shapes the vendor scored at or under the threshold. Present only when the live
+    /// tier ran, and never truncated by `--top`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected: Option<Vec<Candidate>>,
+    /// Candidates no verdict was asked for or received. Present only when the live tier ran, so
+    /// an empty list can never read as "nothing was unjudged" on a run that judged nothing.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unjudged: Option<Vec<Unjudged>>,
     /// Lists every data file in the text form too, as `--full` does for everything else.
     #[serde(skip)]
     pub full: bool,
@@ -52,6 +60,8 @@ pub struct Judgement {
     pub lines_withheld: usize,
     /// Files scanned for known values only: not named by the caller, or not an eligible type.
     pub files_known_only: usize,
+    /// Occurrences counted in `rejected` whose shape keeps them in the `rejected` list.
+    pub rejected_listed: usize,
 }
 
 #[derive(Serialize, Debug, Default, Clone)]
@@ -85,6 +95,23 @@ pub struct Candidate {
     pub p: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub judged_kind: Option<String>,
+    /// The real value and every location, under `--full` only.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub at: Vec<String>,
+}
+
+/// A candidate with no verdict, and why.
+#[derive(Serialize, Debug, Clone)]
+pub struct Unjudged {
+    pub kind: String,
+    pub masked: String,
+    /// `known-only-file`, `over-limit-line` or `over-cap-file`.
+    pub reason: String,
+    pub files: usize,
+    pub hits: usize,
+    pub first: String,
     /// The real value and every location, under `--full` only.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
@@ -140,6 +167,8 @@ impl Report {
             ));
         }
         self.push_candidates(&mut out);
+        self.push_rejected(&mut out);
+        self.push_unjudged(&mut out);
         out
     }
 
@@ -162,6 +191,49 @@ impl Report {
         }
         if unscanned.len() > cap {
             out.push_str(&format!("  and {} more unscanned; --json lists them all\n", unscanned.len() - cap));
+        }
+    }
+
+    fn push_rejected(&self, out: &mut String) {
+        let list = self.rejected.as_deref().unwrap_or_default();
+        if list.is_empty() {
+            return;
+        }
+        out.push_str(&format!("\nREJECTED  {} specific values the vendor scored as not private\n", list.len()));
+        let cap = if self.full { usize::MAX } else { TEXT_DATA_CAP };
+        for c in list.iter().take(cap) {
+            out.push_str(&format!(
+                "  {:<12} {:<20} p {:.2}  {:<12} {}\n",
+                c.kind,
+                c.value.as_deref().unwrap_or(&c.masked),
+                c.p.unwrap_or_default(),
+                c.judged_kind.as_deref().unwrap_or(""),
+                if c.at.is_empty() { c.first.clone() } else { c.at.join("  ") }
+            ));
+        }
+        if list.len() > cap {
+            out.push_str(&format!("  and {} more rejected; --json lists them all\n", list.len() - cap));
+        }
+    }
+
+    fn push_unjudged(&self, out: &mut String) {
+        let list = self.unjudged.as_deref().unwrap_or_default();
+        if list.is_empty() {
+            return;
+        }
+        out.push_str(&format!("\nUNJUDGED  {} candidates with no verdict\n", list.len()));
+        let cap = if self.full { usize::MAX } else { TEXT_DATA_CAP };
+        for u in list.iter().take(cap) {
+            out.push_str(&format!(
+                "  {:<12} {:<20} {:<16} {}\n",
+                u.kind,
+                u.value.as_deref().unwrap_or(&u.masked),
+                u.reason,
+                if u.at.is_empty() { u.first.clone() } else { u.at.join("  ") }
+            ));
+        }
+        if list.len() > cap {
+            out.push_str(&format!("  and {} more unjudged; --json lists them all\n", list.len() - cap));
         }
     }
 

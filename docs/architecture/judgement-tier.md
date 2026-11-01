@@ -52,10 +52,10 @@ All three must hold for a line to be sent:
    lines from `notes.md`; `envscan scan docs/` sends nothing from the files it
    walks under `docs/`. Stdin is never sent. The caller names what it is willing
    to share; a walk can reach anything.
-2. **The extension is one of `md txt py sh sql yml yaml toml`** (`src/judge.rs`
-   line 23, checked by `eligible_name`). A `.log` or `.json` file gets
-   known-value matching only. Widening this is tracked in issue #11, "Judge .log
-   and .json files". The report counts files that were scanned but not judged in
+2. **The extension is one of `md txt py sh sql yml yaml toml log json diff`**
+   (`EXTENSIONS` in `src/judge.rs`, checked by `eligible_name`). `Dockerfile`,
+   `.env.example` and other files outside the list get known-value matching only.
+   The report counts files that were scanned but not judged in
    `files_known_only`, so the gap is visible, not silent.
 3. **The line holds no known value.** A line with a known-value hit is withheld
    and counted in `lines_withheld`; it is already a leak, and sending it would
@@ -64,18 +64,43 @@ All three must hold for a line to be sent:
 Each request carries the line, its relative path and the candidate values, and
 nothing else. Identical lines are sent once.
 
-## Failure is all or nothing
+## Failure is all or nothing, except a line over the vendor's limit
 
-- Any failed request, a malformed answer, or a probability outside 0 to 1 fails
-  the whole run, and the plain candidates stand untouched. One report never mixes
-  judged and unjudged candidates.
-- More candidates than `--max-candidates` (default 5000) is a failure before
-  anything is sent. The estimated cost is printed to stderr first.
+- A failed request, a malformed answer, or a probability outside 0 to 1 fails the
+  whole run, and the plain candidates stand untouched. The report then has no
+  `judgement`, `rejected` or `unjudged`.
+- The one exception is a 400 with `error_type` `max_tokens_exceeded`. It is not
+  retried, and marks only that line unjudged with `over-limit-line`. The run
+  continues. Any other 400 fails the run.
+- To stay under that limit, one line's values split across requests sized by
+  `values_per_request` from the line's length and a budget of 33,000 tokens (see
+  `REQUEST_TOKEN_BUDGET`). Verdicts merge back in value order. `lines_sent` still
+  counts distinct lines, so requests can outnumber it.
+- More candidates than `--max-candidates` (the whole-run limit, default 25,000)
+  is a failure before anything is sent. The worst-case cost, modelled per value
+  plus per line, is printed to stderr first.
+- A file with more candidates than `--max-file-candidates` (default 5,000) sends
+  nothing, and its candidates are listed unjudged with `over-cap-file`. The rest
+  of the run proceeds. A line it shares with an uncapped file is still judged for
+  that file. Withheld lines do not count towards the cap.
 - A candidate is kept when its probability is above 0.3 (`THRESHOLD`).
+
+## What a live report lists besides the survivors
+
+`candidates` holds only survivors and withheld lines. Two more lists appear when
+the live tier ran, and are absent on a plain or fallback run:
+
+- `unjudged`: `kind`, masked value (full value only with `--full`), location, and
+  a `reason` of `known-only-file`, `over-limit-line` or `over-cap-file`.
+- `rejected`: values of shape `ip`, `email`, `home-path`, `account-id`, `bucket`
+  or `gh-repo` scored at or under the threshold, with `p` and `judged_kind`. Other
+  shapes still drop. `judgement.rejected` counts every rejected verdict, and
+  `judgement.rejected_listed` counts the occurrences kept in this list.
+
+Neither list is cut by `--top`. The text form caps each at 20 unless `--full`.
+
 - `ENVSCAN_JEV_ENDPOINT` points the binary at a test stub, and is refused unless
-  it is a loopback URL, so it cannot carry a line or the key elsewhere. The
-  replay-only switch that widens eligibility to every extension is honoured only
-  beside that loopback override.
+  it is a loopback URL, so it cannot carry a line or the key elsewhere.
 
 ## General rule
 
