@@ -160,7 +160,7 @@ fn json_has_every_key_in_a_stable_shape() {
         keys,
         ["candidates", "candidates_by_kind", "candidates_total", "data_files",
          "env_unparsed_lines", "extractor_errors", "files_scanned", "leaks", "rules_loaded",
-         "short_values", "skipped", "tier"]
+         "short_values", "skipped", "tier", "warnings"]
     );
     let mut skipped: Vec<&String> = json["skipped"].as_object().unwrap().keys().collect();
     skipped.sort();
