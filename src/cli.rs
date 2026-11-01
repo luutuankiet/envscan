@@ -21,6 +21,8 @@ pub enum Command {
     /// Replace known values with $KEY and print the text. Exit 0 done, 2 no known values,
     /// 3 usage or IO error.
     Dehydrate(DehydrateArgs),
+    /// Record how `tmp/` files were handled, and decide whether a topic folder can be cleared.
+    Promotion(crate::promotion::PromotionArgs),
 }
 
 #[derive(Args, Debug)]

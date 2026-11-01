@@ -25,7 +25,7 @@ from a local `.env`, extracts broad candidates, and can ask a vendor model to ju
 AGENTS.md      always in context, keep it under 4 KB     CLAUDE.md = @AGENTS.md
 docs/          prose, indexed in docs/README.md          .claude/  the two index skills
 scripts/       repo tooling                              .env.example  what each key means
-src/           the crate: cli, env, matcher, walker, extract, data, scan, report, hydrate, exit
+src/           the crate: cli, env, matcher, walker, extract, data, scan, report, hydrate, promotion, exit
 tests/         the binary as a caller sees it
 ```
 
