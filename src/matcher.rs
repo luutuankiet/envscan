@@ -33,7 +33,7 @@ pub struct Matcher {
     unicode: Vec<(usize, Regex)>,
 }
 
-fn word(b: u8) -> bool {
+pub(crate) fn word(b: u8) -> bool {
     b.is_ascii_alphanumeric() || b == b'_'
 }
 
