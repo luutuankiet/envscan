@@ -1,0 +1,125 @@
+# Release on a version tag, and only then: this is never a pull request check.
+#
+# Push a tag vX.Y.Z whose X.Y.Z equals Cargo.toml's version. Each target builds
+# on a standard runner of its own architecture, and the release carries
+#   envscan-<tag>-<target>.tar.gz   one file, `envscan`, at the archive root
+#   SHA256SUMS                      `<sha256>  <asset>` per tarball
+# which is what the context-lab launcher downloads and verifies. The launcher
+# compares the version `envscan --version` prints, so the build step checks that
+# the binary reports the tag's version before anything is published.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build ${{ matrix.target }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+          - target: aarch64-apple-darwin
+            runner: macos-14
+    runs-on: ${{ matrix.runner }}
+    env:
+      TARGET: ${{ matrix.target }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches Cargo.toml version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match Cargo.toml version $version"
+            exit 1
+          fi
+
+      - name: musl toolchain
+        if: contains(matrix.target, 'musl')
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq musl-tools
+
+      - name: Rust target
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+          rustup target add "$TARGET"
+
+      - name: Build
+        shell: bash
+        run: cargo build --release --locked --target "$TARGET"
+
+      - name: Binary reports the tag's version
+        shell: bash
+        run: |
+          set -euo pipefail
+          got=$("target/$TARGET/release/envscan" --version)
+          echo "$got"
+          if [ "$got" != "envscan ${TAG#v}" ]; then
+            echo "::error::binary reports '$got', expected 'envscan ${TAG#v}'"
+            exit 1
+          fi
+
+      - name: Package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir dist
+          tar -czf "dist/envscan-$TAG-$TARGET.tar.gz" -C "target/$TARGET/release" envscan
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: envscan-${{ matrix.target }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: envscan-*
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          set -- envscan-"$TAG"-*.tar.gz
+          count=$#
+          if [ "$count" -ne 3 ] || [ ! -e "$1" ]; then
+            echo "::error::expected 3 tarballs, found $count"
+            exit 1
+          fi
+          sha256sum envscan-"$TAG"-*.tar.gz >SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" dist/envscan-"$TAG"-*.tar.gz dist/SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" \
+            --notes "Binaries for $TAG. Verify a download against SHA256SUMS."
