@@ -16,6 +16,8 @@ pub struct Report {
     pub skipped: Skipped,
     pub extractor_errors: usize,
     pub leaks: Vec<Leak>,
+    /// Whole-word hits on keys marked `match: warn`. Never a leak, never an exit code.
+    pub warnings: Vec<Leak>,
     pub data_files: Vec<DataFile>,
     pub candidates_total: usize,
     pub candidates_by_kind: BTreeMap<String, usize>,
@@ -117,6 +119,12 @@ impl Report {
                 "  {:<20} strict {:>4}  loose {:>4}  {}\n",
                 leak.key, leak.strict, leak.loose, leak.at.join("  ")
             ));
+        }
+        if !self.warnings.is_empty() {
+            out.push_str(&format!("\nWARNINGS  {} keys marked match: warn (not a leak)\n", self.warnings.len()));
+            for w in &self.warnings {
+                out.push_str(&format!("  {:<20} strict {:>4}  {}\n", w.key, w.strict, w.at.join("  ")));
+            }
         }
         self.push_data_files(&mut out);
         if self.extractor_errors > 0 {

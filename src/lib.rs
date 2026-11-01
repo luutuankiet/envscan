@@ -3,6 +3,7 @@
 //! `cli` parses, `env` finds and reads the `.env`, `matcher` holds the known-value rules,
 //! `walker` decides what is in scope, `extract` finds broad candidates, `data` streams data files, `scan` runs them, `report` is the output shape.
 //! `hydrate` moves text between `$KEY` and real values.
+//! `gate` denies outbound text holding a known value.
 //! `promotion` keeps the record of what left `tmp/` and decides whether a folder can be cleared.
 //! `config` holds the judgement tier and key, `judge` the vendor call.
 //! Each later subcommand is a variant of `cli::Command` plus its own module.
@@ -13,6 +14,7 @@ pub mod data;
 pub mod env;
 pub mod exit;
 pub mod extract;
+pub mod gate;
 pub mod hydrate;
 pub mod judge;
 pub mod matcher;
@@ -39,5 +41,6 @@ pub fn run() -> Exit {
         cli::Command::Dehydrate(args) => hydrate::run_dehydrate(&args),
         cli::Command::Promotion(args) => promotion::run(&args),
         cli::Command::Config(args) => config::run(&args),
+        cli::Command::Gate(args) => gate::run(&args),
     }
 }

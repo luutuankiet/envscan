@@ -25,6 +25,10 @@ pub enum Command {
     Promotion(crate::promotion::PromotionArgs),
     /// Save machine-wide settings.
     Config(ConfigArgs),
+    /// The outbound gate. Reads a PreToolUse hook's JSON on stdin; with --pre-push, git's
+    /// pre-push lines. Exit 0 allow, 2 deny with the reason on stderr naming keys only,
+    /// 3 usage or IO error. `gate install` writes the repo's pre-push hook.
+    Gate(crate::gate::GateArgs),
 }
 
 #[derive(Args, Debug)]

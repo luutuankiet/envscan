@@ -50,6 +50,49 @@ fn rev_parse(cwd: &Path, flag: &str) -> Option<String> {
     (!text.is_empty()).then(|| text.to_string())
 }
 
+/// The `.env.example` beside a `.env`, else the one found as `discover` finds `.env`.
+pub fn example_for(env: Option<&Path>, cwd: &Path) -> Option<PathBuf> {
+    let beside = env.and_then(|p| p.parent()).map(|d| d.join(".env.example"));
+    beside.filter(|p| p.is_file()).or_else(|| discover_example(cwd))
+}
+
+/// The keys an `.env.example` lists, and which of them warn instead of deny: a key warns when
+/// the `what` line above its block ends `| match: warn`. A block runs from a `what` line to
+/// the next blank or comment line.
+#[derive(Debug, Default, Clone)]
+pub struct Example {
+    pub keys: Vec<String>,
+    pub warn: Vec<String>,
+}
+
+impl Example {
+    pub fn load(path: &Path) -> io::Result<Example> {
+        Ok(Example::parse(&std::fs::read(path)?))
+    }
+
+    pub fn parse(bytes: &[u8]) -> Example {
+        let mut example = Example::default();
+        let mut warn = false;
+        for raw in String::from_utf8_lossy(bytes).lines() {
+            let text = raw.trim().trim_start_matches('\u{feff}');
+            if text.is_empty() {
+                warn = false;
+            } else if let Some(comment) = text.strip_prefix('#') {
+                let comment = comment.trim();
+                warn = comment.starts_with("what:") && comment.ends_with("| match: warn");
+            } else if let Some((key, _)) = parse_line(text) {
+                if warn && !example.warn.contains(&key) {
+                    example.warn.push(key.clone());
+                }
+                if !example.keys.contains(&key) {
+                    example.keys.push(key);
+                }
+            }
+        }
+        example
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
     pub key: String,
@@ -204,6 +247,15 @@ mod tests {
         assert_eq!(rules.len(), 2);
         assert_eq!(rules[0].keys, ["A", "B"]);
         assert_eq!(rules[1].keys, ["C"]);
+    }
+
+    #[test]
+    fn a_warn_marker_covers_its_block_only() {
+        let e = Example::parse(
+            b"# what: hosts | group: fleet\nHOST_A=\n\n# what: a word host | group: fleet | match: warn\nHOST_B=\nHOST_C=\n# what: next\nHOST_D=\n",
+        );
+        assert_eq!(e.keys, ["HOST_A", "HOST_B", "HOST_C", "HOST_D"]);
+        assert_eq!(e.warn, ["HOST_B", "HOST_C"]);
     }
 
     #[test]

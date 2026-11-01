@@ -103,7 +103,9 @@ pub fn run(args: &ScanArgs) -> Exit {
     }
 
     let tier = tier.run(&mut scan, args);
-    finish(scan, &env_file, args, tier)
+    let example = env::example_for(env_path.as_deref(), &cwd);
+    let warn = example.and_then(|p| env::Example::load(&p).ok()).unwrap_or_default().warn;
+    finish(scan, &env_file, args, tier, &warn)
 }
 
 /// What the report will say, decided before any file is read so a bad setup sends nothing.
@@ -228,12 +230,15 @@ fn fail(message: &str) -> Exit {
     Exit::Error
 }
 
-fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs, ran: Ran) -> Exit {
+fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs, ran: Ran, warn: &[String]) -> Exit {
     let rules_loaded = scan.matcher.rules().len();
     let files_scanned = scan.scanned;
     let errors = scan.errors;
     let unscanned = scan.data_files.iter().filter(|d| !d.scanned).count();
-    let mut leaks: Vec<Leak> = scan.leaks.into_values().collect();
+    let leaks: Vec<Leak> = scan.leaks.into_values().collect();
+    // A key marked `match: warn` never counts as a leak; only its whole-word hits are reported.
+    let (warned, mut leaks): (Vec<Leak>, Vec<Leak>) = leaks.into_iter().partition(|l| warn.contains(&l.key));
+    let warnings: Vec<Leak> = warned.into_iter().filter(|l| l.strict > 0).map(|l| Leak { loose: 0, ..l }).collect();
     leaks.sort_by(|a, b| (b.strict + b.loose).cmp(&(a.strict + a.loose)).then(a.key.cmp(&b.key)));
     let total_hits: usize = leaks.iter().map(|l| l.strict + l.loose).sum();
 
@@ -278,6 +283,7 @@ fn finish(scan: Scan, env_file: &EnvFile, args: &ScanArgs, ran: Ran) -> Exit {
         skipped: scan.skipped,
         extractor_errors: scan.extractor_errors,
         leaks,
+        warnings,
         data_files: scan.data_files,
         candidates_total,
         candidates_by_kind,
