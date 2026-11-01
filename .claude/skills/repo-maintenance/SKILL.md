@@ -52,9 +52,9 @@ minutes if someone had told you. Three tests, all must pass:
 
    | rung | use when | this repo |
    |---|---|---|
-   | make it a **type error** | the mistake is expressible in the type system | `cargo check`, once source exists |
-   | make it a **test** | the mistake is an assertable behaviour | `cargo test`, once source exists |
-   | **comment at the site** | there is exactly one line where someone could get it wrong | yes; no example yet |
+   | make it a **type error** | the mistake is expressible in the type system | `cargo check` |
+   | make it a **test** | the mistake is an assertable behaviour | `cargo test` |
+   | **comment at the site** | there is exactly one line where someone could get it wrong | yes, e.g. the accepted-gap comment at `src/walker.rs` 7-9 |
    | **a doc** | the mistake can be made from any of several files, or from a file that does not exist yet | the catalogue above |
 
    Before adding one, say out loud which single line you would have commented

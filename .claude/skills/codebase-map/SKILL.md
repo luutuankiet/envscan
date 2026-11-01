@@ -19,7 +19,13 @@ every page — that defeats the point.
 One page per area of the system. Read before going looking for where
 something is implemented.
 
-_No pages yet._
+| page | covers | verified |
+|---|---|---|
+| [The judgement tier](../../../docs/architecture/judgement-tier.md) | how envscan scan decides between plain and live judgement, where the tier and the vendor key are read from, which lines may be sent to the vendor model, and what happens when judging fails | 2026-11-01 |
+| [Known-value matching, hydrate and dehydrate](../../../docs/architecture/known-value-matching.md) | how a value from .env is matched in text, which neighbours count as a word boundary, strict versus loose hits, and how hydrate and dehydrate move text between $KEY and real values | 2026-11-01 |
+| [The outbound gate](../../../docs/architecture/outbound-gate.md) | what envscan gate checks before a git push leaves the machine, when a repo counts as opted in, why it denies with no leak found, and how gate install writes the pre-push hook | 2026-11-01 |
+| [The promotion record](../../../docs/architecture/promotion-record.md) | envscan promotion add and status, where the record of handled tmp/ files is stored, what each handling and its ref mean, and how status decides a folder is safe to clear | 2026-11-01 |
+| [The scan pipeline](../../../docs/architecture/scan-pipeline.md) | where envscan scan finds the .env, decides which files to read, matches, extracts candidates, prints the report and picks the exit code | 2026-11-01 |
 
 <!-- END GENERATED INDEX -->
 
@@ -37,7 +43,7 @@ it in the page and re-date it — that is a one-line edit and it is how the map
 stays worth having.
 
 Line ranges are given at all because the files that matter most here are big:
-no source yet, so name the largest file here once one passes a few hundred lines. "It's in <that file>" is not an
+`src/gate.rs` is 726 lines, `src/promotion.rs` 618 and `src/scan.rs` 580. "It's in <that file>" is not an
 answer.
 
 ## What this map does not tell you
