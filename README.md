@@ -16,7 +16,12 @@ attached to each release. For v0.2.1:
 
 ```sh
 TAG=v0.2.1
-TARGET=x86_64-unknown-linux-musl   # or aarch64-unknown-linux-musl, aarch64-apple-darwin
+case "$(uname -sm)" in
+  "Linux x86_64")  TARGET=x86_64-unknown-linux-musl ;;
+  "Linux aarch64") TARGET=aarch64-unknown-linux-musl ;;
+  "Darwin arm64")  TARGET=aarch64-apple-darwin ;;
+  *) TARGET=unsupported; echo "no binary for $(uname -sm); build from source" >&2 ;;
+esac
 BASE=https://github.com/luutuankiet/envscan/releases/download/$TAG
 curl -fsSLO "$BASE/envscan-$TAG-$TARGET.tar.gz"
 curl -fsSLO "$BASE/SHA256SUMS"
