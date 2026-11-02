@@ -9,6 +9,8 @@
 # the binary reports the tag's version before anything is published.
 name: release
 
+# A tag runs this file from its own commit, so rerunning it repeats the old file.
+# A fix here reaches a release only through a version bump and a new tag.
 on:
   push:
     tags: ["v*"]

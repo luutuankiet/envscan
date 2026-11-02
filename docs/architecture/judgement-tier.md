@@ -1,7 +1,7 @@
 ---
 title: The judgement tier
 covers: how envscan scan decides between plain and live judgement, where the tier and the vendor key are read from, which lines may be sent to the vendor model, and what happens when judging fails
-verified: 2026-11-01
+verified: 2026-11-02
 ---
 
 # The judgement tier
@@ -21,15 +21,15 @@ it here and re-date the page.
 
 | step | file and lines | what lives there |
 |---|---|---|
-| the saved tier | `src/config.rs` 21-41 | `saved_tier`: reads `~/.config/envscan/config.toml`; `auto` or no file is unset; anything unreadable is `Bad` and runs plain |
+| the saved tier | `src/config.rs` 26-41 | `saved_tier`: reads `~/.config/envscan/config.toml`; `auto` or no file is unset; anything unreadable is `Bad` and runs plain |
 | the vendor key | `src/config.rs` 43-72 | `api_key`: the `TYPESAFE_API_KEY` environment variable, then `~/.config/envscan/env` |
 | saving the tier | `src/config.rs` 74-101 | `envscan config tier auto\|live\|plain`, written by rename so a reader never sees half a file |
-| choosing the tier | `src/scan.rs` 111-138 | `Tier::choose`, decided before any file is read so a bad setup sends nothing |
-| which files may be sent | `src/scan.rs` 74-93 | the `named` set and the `sendable` flag per file |
-| which lines may be sent | `src/scan.rs` 340-356 | `extract_text`: a line that already holds a known value is withheld |
-| running it, and falling back | `src/scan.rs` 140-163 | `Tier::run` and `Ran::fallback` |
-| sending and tallying | `src/scan.rs` 165-226 | `judge_pending`: one request per distinct line, the cost estimate, the candidate cap, the threshold |
-| the vendor call | `src/judge.rs` 10-23, 55-60, 113-196 | constants, `eligible_name`, `Client`, `judge` |
+| choosing the tier | `src/scan.rs` 120-147 | `Tier::choose`, decided before any file is read so a bad setup sends nothing |
+| which files may be sent | `src/scan.rs` 85-103 | the `named` set and the `sendable` flag per file |
+| which lines may be sent | `src/scan.rs` 412-432 | `extract_text`: a line that already holds a known value is withheld |
+| running it, and falling back | `src/scan.rs` 149-172 | `Tier::run` and `Ran::fallback` |
+| sending and tallying | `src/scan.rs` 174-266 | `judge_pending`: one request per distinct line, the cost estimate, the candidate cap, the threshold |
+| the vendor call | `src/judge.rs` 12-31, 53-59, 135-277 | constants, `eligible_name`, `Client`, `judge` |
 
 ## Where the tier and the key come from
 
@@ -75,7 +75,8 @@ nothing else. Identical lines are sent once.
 - To stay under that limit, one line's values split across requests sized by
   `values_per_request` from the line's length and a budget of 33,000 tokens (see
   `REQUEST_TOKEN_BUDGET`). Verdicts merge back in value order. `lines_sent` still
-  counts distinct lines, so requests can outnumber it.
+  counts distinct lines, so requests can outnumber it. `candidates_sent` includes
+  the values of a refused line, so `kept` plus `rejected` can be lower than it.
 - More candidates than `--max-candidates` (the whole-run limit, default 25,000)
   is a failure before anything is sent. The worst-case cost, modelled per value
   plus per line, is printed to stderr first.
@@ -84,6 +85,8 @@ nothing else. Identical lines are sent once.
   of the run proceeds. A line it shares with an uncapped file is still judged for
   that file. Withheld lines do not count towards the cap.
 - A candidate is kept when its probability is above 0.3 (`THRESHOLD`).
+- `ENVSCAN_JEV_ENDPOINT` points the binary at a test stub, and is refused unless
+  it is a loopback URL, so it cannot carry a line or the key elsewhere.
 
 ## What a live report lists besides the survivors
 
@@ -98,9 +101,6 @@ the live tier ran, and are absent on a plain or fallback run:
   `judgement.rejected_listed` counts the occurrences kept in this list.
 
 Neither list is cut by `--top`. The text form caps each at 20 unless `--full`.
-
-- `ENVSCAN_JEV_ENDPOINT` points the binary at a test stub, and is refused unless
-  it is a loopback URL, so it cannot carry a line or the key elsewhere.
 
 ## General rule
 

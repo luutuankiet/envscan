@@ -12,10 +12,10 @@ does for you and `envscan hydrate` reverses locally.
 ## Install
 
 Binaries for Linux (x86_64 and aarch64, static musl) and macOS (Apple Silicon) are
-attached to each release. For v0.1.1:
+attached to each release. For v0.2.1:
 
 ```sh
-TAG=v0.1.1
+TAG=v0.2.1
 TARGET=x86_64-unknown-linux-musl   # or aarch64-unknown-linux-musl, aarch64-apple-darwin
 BASE=https://github.com/luutuankiet/envscan/releases/download/$TAG
 curl -fsSLO "$BASE/envscan-$TAG-$TARGET.tar.gz"
@@ -23,16 +23,16 @@ curl -fsSLO "$BASE/SHA256SUMS"
 grep "envscan-$TAG-$TARGET.tar.gz" SHA256SUMS | shasum -a 256 -c -
 mkdir -p ~/.local/bin
 tar -xzf "envscan-$TAG-$TARGET.tar.gz" -C ~/.local/bin envscan
-envscan --version   # envscan 0.1.1
+envscan --version   # envscan 0.2.1
 ```
 
 Each archive holds one file, `envscan`, at its root. To build from source instead:
-`cargo install --git https://github.com/luutuankiet/envscan --tag v0.1.1`.
+`cargo install --git https://github.com/luutuankiet/envscan --tag v0.2.1`.
 
 ## A worked example
 
 Everything below is a throwaway repo with invented values; the output is pasted
-from a real run of v0.1.1.
+from a real run of v0.2.1.
 
 The repo has a gitignored `.env` with the real values:
 

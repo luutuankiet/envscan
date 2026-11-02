@@ -252,8 +252,8 @@ fn the_shipped_filter_replays_to_58_flagged_and_55_of_59() {
     assert_eq!(seen.bad_auth, 0);
     assert_eq!(seen.state_keys, HashSet::from(["file".to_string(), "line".to_string()]));
     // Every fixture file is an eligible type now, so all of them are sent.
-    assert_eq!(eligible_files().len(), FILES.len());
-    assert_eq!(seen.files.len(), FILES.len());
+    assert_eq!(eligible_files(), FILES);
+    assert_eq!(seen.files, FILES.iter().map(|f| f.to_string()).collect::<HashSet<_>>());
     let all = score(&report, FILES);
     eprintln!("shipped filter: {all:?}");
     assert_eq!((all.flagged, all.planted, all.found), (58, 59, 55));

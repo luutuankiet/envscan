@@ -19,15 +19,15 @@ it here and re-date the page.
 
 | step | file and lines | what lives there |
 |---|---|---|
-| entry and order of work | `src/scan.rs` 24-109 | `run`: load rules, refuse a missing path before any work, read stdin, walk, scan files in parallel, judge, finish |
+| entry and order of work | `src/scan.rs` 32-118 | `run`: load rules, refuse a missing path before any work, read stdin, walk, scan files in parallel, judge, finish |
 | finding the `.env` | `src/env.rs` 13-66 | `discover` and `example_for`: an explicit `--env`, else `.env` at the repo root; `.env.example` beside it. One definition shared by every subcommand and the gate |
 | parsing the `.env` | `src/env.rs` 111-200 | `EnvFile::parse`, `rules`, `short_keys`, `empty_keys`; read line by line, never sourced |
 | what is in scope | `src/walker.rs` 17-128 | `GENERATED_DIRS`, `is_secret_name`, `walk` |
-| text files | `src/scan.rs` 401-446 | `scan_file` and `scan_bytes`: files over 2,000,000 bytes, binary (a NUL in the first 8 KB) and non-UTF-8 files are skipped and counted |
+| text files | `src/scan.rs` 473-518 | `scan_file` and `scan_bytes`: files over 2,000,000 bytes, binary (a NUL in the first 8 KB) and non-UTF-8 files are skipped and counted |
 | data files | `src/extract.rs` 39-56, `src/data.rs` | `csv tsv jsonl ndjson` are streamed through known-value matching with no size cap and no extractor; `xlsx parquet sqlite` and the other binary forms are only listed |
 | broad candidates | `src/extract.rs` 9-150 | 13 ordered shapes per line, lines over 4096 bytes skipped; a port of a Python reference held to it by `tests/extract.rs` and `tests/fixtures/broad/` |
 | the report | `src/report.rs` | field order and key names are a contract for `--json` readers |
-| the exit code | `src/exit.rs` 21-31, `src/scan.rs` 233-316 | `Exit::decide` and `finish` |
+| the exit code | `src/exit.rs` 21-31, `src/scan.rs` 300-388 | `Exit::decide` and `finish` |
 
 ## Scope rules worth knowing before you change the walker
 

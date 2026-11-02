@@ -188,8 +188,8 @@ fn the_392_ip_line_ends_live_with_every_value_judged_in_order() {
     let kept = full_values(listed(&report, "candidates"));
     let rejected = full_values(listed(&report, "rejected"));
     assert_eq!(kept.len() + rejected.len(), 392);
-    assert!(kept.iter().all(|v| even(v)), "a verdict landed on the wrong value");
-    assert!(!rejected.iter().any(|v| even(v)), "a verdict landed on the wrong value");
+    assert!(kept.iter().all(even), "a verdict landed on the wrong value");
+    assert!(!rejected.iter().any(even), "a verdict landed on the wrong value");
 }
 
 #[test]
