@@ -313,10 +313,27 @@ impl Gate {
 
     /// Commits in a range: diffs, file names, authors, committers and messages.
     fn check_range(&self, dir: &Path, range: &[&str], found: &mut Findings) -> Result<(), String> {
-        let mut log = vec!["log", "-p", "--no-ext-diff", "--no-color", "--no-textconv", "--format=%an <%ae>%n%cn <%ce>%n%B"];
+        let mut log = vec!["log", "-p", "--no-ext-diff", "--no-color", "--no-textconv", "--format=%B"];
         log.extend_from_slice(range);
         let text = git(dir, &log).ok_or("cannot read the commits to push")?;
         self.check(text.as_bytes(), "commits to push", found);
+        // An author or committer field equal to this clone's own user.name or user.email is
+        // the pusher signing their work, not a leak, even when `.env` holds the same value.
+        // Any other identity is still checked, field by field.
+        let own: Vec<String> = ["user.name", "user.email"]
+            .iter()
+            .filter_map(|key| git(dir, &["config", key]))
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty())
+            .collect();
+        let mut ids = vec!["log", "--format=%an%x00%ae%x00%cn%x00%ce"];
+        ids.extend_from_slice(range);
+        let ids = git(dir, &ids).ok_or("cannot read the commits to push")?;
+        for field in ids.split(['\0', '\n']).filter(|f| !f.is_empty()) {
+            if !own.iter().any(|v| v == field) {
+                self.check(field.as_bytes(), "commit authors and committers", found);
+            }
+        }
         let mut stat = vec!["log", "--numstat", "--diff-filter=A", "--format="];
         stat.extend_from_slice(range);
         let stat = git(dir, &stat).ok_or("cannot read the commits to push")?;

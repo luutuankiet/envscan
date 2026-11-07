@@ -354,6 +354,39 @@ fn a_planted_value_is_denied_through_git_push_and_pre_push() {
 }
 
 #[test]
+fn the_pushers_own_identity_passes_but_another_identity_or_the_message_still_denies() {
+    let lab = lab();
+    // The clone's own git identity holds a value that `.env` also holds, as when an
+    // operator's email is also a service account email in the repo's `.env`.
+    git(&lab.home, &lab.repo, &["config", "user.email", PLANTED]);
+    for (place, cwd) in checkouts(&lab) {
+        let branch = git(&lab.home, &cwd, &["branch", "--show-current"]);
+        let base = git(&lab.home, &cwd, &["rev-parse", "HEAD"]);
+        let push = |lab: &Lab| {
+            let head = git(&lab.home, &cwd, &["rev-parse", "HEAD"]);
+            let line = format!("refs/heads/{branch} {head} refs/heads/{branch} {base}\n");
+            envscan(&lab.home, &cwd, &["gate", "--pre-push"], &line)
+        };
+
+        // Authored under the clone's own email: passes.
+        git(&lab.home, &cwd, &["commit", "-q", "--allow-empty", "-m", "x", "--author", &format!("Someone <{PLANTED}>")]);
+        assert_clean(&push(&lab), place);
+        assert_clean(&gate_bash(&lab, &cwd, "git push"), place);
+        git(&lab.home, &cwd, &["reset", "-q", "--hard", &base]);
+
+        // An identity that only contains the value is someone else's: denied.
+        git(&lab.home, &cwd, &["commit", "-q", "--allow-empty", "-m", "x", "--author", &format!("Someone <{PLANTED}.other@example.invalid>")]);
+        assert_denied(&push(&lab), "PLANTED_TOKEN", place);
+        git(&lab.home, &cwd, &["reset", "-q", "--hard", &base]);
+
+        // The message is still read, whoever wrote it.
+        git(&lab.home, &cwd, &["commit", "-q", "--allow-empty", "-m", &format!("about {PLANTED}"), "--author", &format!("Someone <{PLANTED}>")]);
+        assert_denied(&push(&lab), "PLANTED_TOKEN", place);
+        git(&lab.home, &cwd, &["reset", "-q", "--hard", &base]);
+    }
+}
+
+#[test]
 fn a_planted_value_is_denied_through_gh_body_and_body_file() {
     let lab = lab();
     for (place, cwd) in checkouts(&lab) {

@@ -1,7 +1,7 @@
 ---
 title: The outbound gate
 covers: what envscan gate checks before a git push leaves the machine, when a repo counts as opted in, why it denies with no leak found, and how gate install writes the pre-push hook
-verified: 2026-11-01
+verified: 2026-11-07
 ---
 
 # The outbound gate
@@ -33,9 +33,9 @@ it here and re-date the page.
 | opting in | `src/gate.rs` 134-168 | `Gate::load`: finds `.env` and `.env.example` the same way `scan` does |
 | refusing to run blind | `src/gate.rs` 170-181 | `preflight` |
 | the verdict | `src/gate.rs` 237-275 | `verdict`, `check`, `check_once`: percent-decoded text is checked too |
-| what a push carries | `src/gate.rs` 314-327 | `check_range`: patches, file names, author and committer, messages |
-| reading the ref lines | `src/gate.rs` 329-355 | `pre_push`: ref names, annotated tags, the commit range per ref |
-| writing the hook | `src/gate.rs` 17-21, 622-663 | `HOOK_SCRIPT` and `install` |
+| what a push carries | `src/gate.rs` 314-344 | `check_range`: patches, file names, messages, then author and committer field by field |
+| reading the ref lines | `src/gate.rs` 346-372 | `pre_push`: ref names, annotated tags, the commit range per ref |
+| writing the hook | `src/gate.rs` 17-21, 639-680 | `HOOK_SCRIPT` and `install` |
 
 ## When the gate applies
 
@@ -60,6 +60,14 @@ For each ref line git passes:
 - every commit in the range not already on the remote (a new branch is checked
   against everything not on any remote): its patch, the names of the files it
   touches, the author and committer name and email, and the message.
+
+**The pusher's own identity is exempt.** An author or committer name or email that
+equals this clone's `git config user.name` or `user.email` exactly is not checked,
+even when `.env` holds the same value: a repo whose `.env` lists the operator's
+email for a service (a certificate or DNS account) would otherwise deny every push
+the operator makes. The comparison is per field and exact, so an identity that
+only contains a known value, or someone else's identity, is still checked, and the
+message and patch are checked whoever wrote them.
 
 A push that adds a binary file is denied: the gate cannot scan one, so binaries
 are pushed by the operator by hand. Any git command that fails while reading the
